@@ -1,0 +1,133 @@
+<div class="flex items-center justify-between px-6 py-3 bg-grey-200">
+    <div class="font-bold text-xl text-grey-600">
+      {{ data === null ? "Create Timesheet Template" : "Edit Timesheet Template" }}
+    </div>
+    <div class="flex items-center" [ngClass]="isLoading ? 'cursor-not-allowed': 'cursor-pointer'" (click)="isLoading ? $event.stopPropagation() : closeDialog(false)">
+      <mat-icon>close</mat-icon>
+    </div>
+  </div>
+
+  <form [formGroup]="createTemplateForm">
+    <div class="py-6 px-6 max-h-[650px] overflow-auto">
+      <div class="flex flex-row items-center gap-6">
+        <!-----Template Name------->
+        <div class="w-full">
+          <div class="flex flex-start gap-3">
+            <div class="text-base mb-2 font-medium">Template Name <sup>*</sup></div>
+          </div>
+          <mat-form-field
+            class="w-full mb-3 custom-form-field"
+            appearance="outline"
+          >
+            <input
+              matInput
+              placeholder="Enter template name"
+              formControlName="templateName"
+              id="txtTemplateNameName"
+              #templateName
+              required
+            />
+            <mat-hint
+            align="start"
+            [ngClass]="templateName.value.length > 100 || templateName.value.length < 3 ? 'text-red-500' : ''"
+            >Min. 3, Max. 100 characters</mat-hint
+          >
+            <mat-hint
+              align="end"
+              [ngClass]="templateName.value.length > 100 || templateName.value.length < 3 ? 'text-red-500' : ''"
+              >{{ templateName.value.length }} / 100</mat-hint
+            >
+            @if (createTemplateForm.controls.templateName.hasError('required')){
+            <mat-error>Template Name is required.</mat-error>
+            } @if (createTemplateForm.controls.templateName.hasError('pattern')){
+            <mat-error>Invalid Characters</mat-error>
+            }
+          </mat-form-field>
+        </div>
+      </div>
+      <div class="flex flex-row items-center gap-6">
+        <!-----Excel file ------->
+        <div class="w-full mb-5">
+          <div class="flex flex-start gap-3">
+            <div class="text-base mb-2 font-medium">Excel Template <sup>*</sup></div>
+          </div>
+            <input
+              type="file"
+              (change)="onFileSelected($event)"
+              accept=".xlsx"
+              id="fileInput"
+              style="display: none;"
+            />
+            <button
+              mat-raised-button
+              color="secondary"
+              (click)="triggerFileInput()"
+            >
+              Choose File
+            </button>
+            @if (selectedFile || (data && data.filename)) {
+              <mat-hint class="ml-5" [class.error-text]="fileError">
+                {{ selectedFile?.name || data?.filename }}</mat-hint>
+            }
+            @if (fileError) {
+              <div class="error-message mt-2">{{ fileError }}</div>
+            }
+            @if (createTemplateForm.get('filenameWithoutExtension')?.errors?.['minlength']) {
+              <div class="error-message mt-2">File name must be at least 3 characters long.</div>
+            }
+        </div>
+      </div>
+
+      <!-----Json excel mapping------->
+      <div class="flex flex-start gap-3">
+        <div class="text-base mb-2 font-medium">JSON Mapping <sup>*</sup></div>
+      </div>
+      <mat-form-field appearance="outline" class="w-full mb-3">
+          <textarea
+          matInput
+          formControlName="json"
+          placeholder="Enter JSON mapping here..."
+          rows="10"
+          ></textarea>
+          @if (createTemplateForm.controls.json.hasError('required')) {
+            <mat-error>JSON mapping is required.</mat-error>
+          } @else if (createTemplateForm.controls.json.hasError('invalidJson')) {
+            <mat-error>Please enter valid JSON format.</mat-error>
+          } @else if (createTemplateForm.controls.json.hasError('emptyJson')) {
+            <mat-error>JSON must contain at least one key-value pair.</mat-error>
+          } @else if (createTemplateForm.controls.json.hasError('emptyKey')) {
+            <mat-error>JSON keys cannot be empty.</mat-error>
+          }
+      </mat-form-field>
+    </div>
+
+    <hr class="border-grey-300 mb-4" />
+
+    <div class="button flex justify-end px-6 gap-3">
+      <button
+        mat-stroked-button
+        class="mat-cancel !rounded-[50px]"
+        type="button"
+        (click)="closeDialog(false)"
+        id="btnCancel"
+        [disabled]="isLoading"
+      >
+        Cancel
+      </button>
+      <button
+        mat-raised-button
+        class="mat-create !rounded-[50px]"
+        id="btnSave"
+        [disabled]="createTemplateForm.invalid || fileError"
+        (click)="saveOrEditData()"
+        type="submit"
+      >
+      <div class="flex items-center gap-2">
+        <span>Save</span>
+        @if (isLoading) {
+          <mat-spinner diameter="20"></mat-spinner>
+        }
+      </div>
+      </button>
+    </div>
+  </form>

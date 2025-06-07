@@ -1,0 +1,155 @@
+<div class="flex items-center justify-between px-6 py-3 bg-grey-200">
+  <div class="font-bold text-xl text-grey-600">
+    {{ data === null ? "Create Consultant" : "Edit Consultant" }}
+  </div>
+  <div class="cursor-pointer flex items-center" (click)="closeDialog(false)">
+    <mat-icon>close</mat-icon>
+  </div>
+</div>
+
+<form [formGroup]="createConsultantForm">
+  <div class="py-6 px-6 max-h-[399px] overflow-auto">
+    <div class="flex flex-row items-center gap-6">
+      <!-----First Name------->
+      <div class="w-full">
+        <div class="flex flex-start gap-3">
+          <div class="text-base mb-2 font-medium">First Name <sup>*</sup></div>
+        </div>
+        <mat-form-field
+          class="w-full mb-3 custom-form-field"
+          appearance="outline"
+        >
+          <input
+            matInput
+            placeholder="Enter first name"
+            formControlName="firstName"
+            id="txtConsultantFirstName"
+            #firstName
+            required
+          />
+          <mat-hint
+          align="start"
+          [ngClass]="firstName.value.length > 50 || firstName.value.length < 2 ? 'text-red-500' : ''"
+          >Min. 2, Max. 50 characters</mat-hint
+        >
+          <mat-hint
+            align="end"
+            [ngClass]="firstName.value.length > 50 || firstName.value.length < 2 ? 'text-red-500' : ''"
+            >{{ firstName.value.length }} / 50</mat-hint
+          >
+          @if (createConsultantForm.controls.firstName.hasError('required')){
+          <mat-error>First Name is required.</mat-error>
+          } @if (createConsultantForm.controls.firstName.hasError('pattern')){
+          <mat-error>Invalid Characters</mat-error>
+          }
+        </mat-form-field>
+      </div>
+      <!-----Last Name------->
+      <div class="w-full">
+        <div class="flex flex-start gap-3">
+          <div class="text-base mb-2 font-medium">Last Name <sup>*</sup></div>
+        </div>
+        <mat-form-field
+          class="w-full mb-3 custom-form-field"
+          appearance="outline"
+        >
+          <input
+            matInput
+            placeholder="Enter last name"
+            formControlName="lastName"
+            id="txtConsultantLastName"
+            #lastName
+            required
+          />
+          <mat-hint
+            align="start"
+            [ngClass]="lastName.value.length > 50 || lastName.value.length < 2 ? 'text-red-500' : ''"
+            >Min. 2, Max. 50 characters</mat-hint
+          >
+          <mat-hint
+            align="end"
+            [ngClass]="lastName.value.length > 50 || lastName.value.length < 2 ? 'text-red-500' : ''"
+            >{{ lastName.value.length }} / 50</mat-hint
+          >
+          @if (createConsultantForm.controls.lastName.hasError('required')){
+          <mat-error>Last Name is required.</mat-error>
+          } @if (createConsultantForm.controls.lastName.hasError('pattern')){
+          <mat-error>Invalid Characters</mat-error>
+          }
+        </mat-form-field>
+      </div>
+    </div>
+
+    <!-----Email------->
+    <div class="flex flex-start gap-3">
+      <div class="text-base mb-2 font-medium">Personal Email <sup>*</sup></div>
+    </div>
+    <mat-form-field class="w-full mb-3 custom-form-field" appearance="outline">
+      <input
+        matInput
+        placeholder="Enter email"
+        formControlName="email"
+        id="txtConsultantEmail"
+        required
+      />
+      @if (createConsultantForm.controls.email.hasError('required')){
+      <mat-error>Personal Email is required.</mat-error>
+      } @if (createConsultantForm.controls.email.hasError('email')){
+      <mat-error>Invalid Email Format.</mat-error>
+      } @if (createConsultantForm.get('email')?.hasError('duplicateEmail')){
+        <mat-error>Consultant already exists.</mat-error>
+      } @if (createConsultantForm.controls.email.hasError('pattern') && !createConsultantForm.controls.email.hasError('email')){
+        <mat-error>Invalid Characters</mat-error>
+      }
+    </mat-form-field>
+
+    <!--Client Email-->
+    <div class="flex flex-start gap-3">
+      <div class="text-base mb-2 font-medium">Client Email</div>
+    </div>
+    <mat-form-field class="w-full mb-3 custom-form-field" appearance="outline">
+      <input
+        matInput
+        placeholder="Enter email"
+        formControlName="clientEmail"
+        id="txtConsultantClientEmail"
+      />
+      @if (createConsultantForm.controls.clientEmail.hasError('email')){
+      <mat-error>Invalid Email Format.</mat-error>
+      }
+      @if (createConsultantForm.get('clientEmail')?.hasError('duplicateEmail')){
+        <mat-error>Consultant already exists.</mat-error>
+      } @if (createConsultantForm.controls.clientEmail.hasError('pattern') && !createConsultantForm.controls.clientEmail.hasError('email')){
+        <mat-error>Invalid Characters</mat-error>
+      }
+    </mat-form-field>
+  </div>
+
+  <hr class="border-grey-300 mb-4" />
+
+  <div class="button flex justify-end px-6 gap-3">
+    <button
+      mat-stroked-button
+      class="mat-cancel !rounded-[50px]"
+      type="button"
+      (click)="closeDialog(false)"
+      id="btnCancel"
+    >
+      Cancel
+    </button>
+    <button
+      mat-raised-button
+      class="mat-create !rounded-[50px]"
+      id="btnSave"
+      [disabled]="createConsultantForm.invalid"
+      (click)="saveConsultant()"
+      type="submit"
+    >
+      Save
+    </button>
+  </div>
+</form>
+
+<app-upload-progress-overlay
+  *ngIf="isCreatingConsultant"
+></app-upload-progress-overlay>

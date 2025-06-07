@@ -1,0 +1,120 @@
+<mat-card class="my-10 mx-6">
+  <mat-card-content class="!p-0">
+    <div
+      class="flex !items-center bg-card-blue !justify-between py-4 pr-8 pl-7 rounded-t-lg"
+    >
+      <div class="text-xl font-semibold">Clients</div>
+      <button
+        class="create-button"
+        mat-raised-button
+        color="create"
+        (click)="createClients()"
+      >
+        <div class="flex items-center">
+          <mat-icon class="mr-1 -ml-2">add</mat-icon>
+          Create Client
+        </div>
+      </button>
+    </div>
+    <div class="create-client-table">
+      <table mat-table [dataSource]="dataSource" id="tblClientOverview">
+
+        <!--Short Name-->
+        <ng-container matColumnDef="shortName">
+          <th
+            mat-header-cell
+            *matHeaderCellDef
+            id="tblRowHeaderClientShortName"
+          >
+            client short name
+          </th>
+          <td mat-cell *matCellDef="let row">{{ row.shortName }}</td>
+        </ng-container>
+        <!--Legal Name-->
+        <ng-container matColumnDef="legalName">
+          <th
+            mat-header-cell
+            *matHeaderCellDef
+            id="tblRowHeaderClientLegalName"
+          >
+            client legal name
+          </th>
+          <td mat-cell *matCellDef="let row">{{ row.legalName }}</td>
+        </ng-container>
+
+        <!--Contact Person-->
+        <ng-container matColumnDef="contactPerson">
+          <th mat-header-cell *matHeaderCellDef id="tblRowHeaderClientContactPerson" >
+            Contact Persons
+          </th>
+          <td mat-cell *matCellDef="let row">
+            <div *ngFor="let p of row.contactPersons" class="person-entry">
+              <div class="person-name">{{ p.firstName }} {{ p.lastName }}</div>
+              <div class="person-email">{{ p.email }}</div>
+            </div>
+          </td>
+        </ng-container>
+        <!--Status-->
+        <ng-container matColumnDef="status">
+          <th
+            mat-header-cell
+            *matHeaderCellDef
+            class="!pl-10"
+            id="tblRowHeaderClientStatus"
+          >
+            status
+          </th>
+          <td mat-cell *matCellDef="let row">
+            <div
+              class="w-max text-center font-medium rounded-full px-4 py-[3px]"
+              [ngClass]="
+                row.status === Active
+                  ? '!bg-active-status-bg text-active-status-text'
+                  : '!bg-inactive-status-bg text-inactive-status-text'
+              "
+            >
+              {{ row.status === Active ? 'Active' : row.status === Inactive ? 'Inactive' : '-' }}
+            </div>
+          </td>
+        </ng-container>
+        <!--Action-->
+        <ng-container matColumnDef="action">
+          <th
+            mat-header-cell
+            *matHeaderCellDef
+            mat-sort-header
+            id="tblRowHeaderAction"
+          >
+          Actions
+          </th>
+          <td mat-cell *matCellDef="let row" class="underline cursor-pointer">
+            <div class="flex gap-2 flex-row items-center">
+              <mat-icon matTooltip="Edit Client" class="material-symbols-outlined text-blue" (click)="editClient(row.id)"> edit_square </mat-icon>
+              @if(row.status == Active){
+                <mat-icon matTooltip="Delete Client" class="material-symbols-outlined text-red-600" (click)="deleteClient(row.id, row)"> delete</mat-icon>
+              }
+            </div>
+            <!-- <div [matMenuTriggerFor]="menu">Options</div>
+            <mat-menu #menu="matMenu" backdropClass="client-list-menu">
+              <button mat-menu-item id="btnEditClient" (click)="editClient(row.id)">Edit</button>
+              @if(row.status == Active){
+                <button mat-menu-item id="btnDeleteClient" (click)="deleteClient(row.id, row)">Delete</button>
+              }
+            </mat-menu> -->
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns" class="uppercase !bg-card-blue"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+
+        <!-- Text inside the table -->
+        <tr class="mat-row" *matNoDataRow>
+          <td class="mat-cell" colspan="12">
+            <div class="flex justify-center no-data-row !text-grey-600 !text-[1.1rem] italic">No Clients to view</div>
+          </td>
+        </tr>
+      </table>
+    </div>
+  </mat-card-content>
+</mat-card>
+<!-- <app-upload-progress-overlay *ngIf="isLoading"></app-upload-progress-overlay> -->

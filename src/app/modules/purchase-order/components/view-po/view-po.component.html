@@ -1,0 +1,111 @@
+<div class="flex items-end justify-start mb-10 mx-3 pt-5">
+  <div class="flex items-center cursor-pointer hover:bg-grey-100 p-2 hover:rounded-md" (click)="goToProjectOverview()">
+    <span class="material-symbols-outlined mr-2">
+      list
+    </span><span class="">Back to Overview</span>
+  </div>
+</div>
+
+<div class="flex flex-row justify-start gap-3 mx-6 pb-5 items-center">
+  <div class="text-lg font-bold text-grey-600">
+   <span class="text-black"> PO details for - </span>{{ po?.projects[0]?.projectName }} ({{ po?.clients[0]?.shortName }})
+  </div>
+  <div class="italic text-sm mt-1">{{po?.projects[0]?.endClients?.name}}</div>
+  <div
+    class="w-max h-max text-center font-medium rounded-full px-4 py-[4px]"
+    *ngIf="po"
+    [ngClass]="
+    po?.projects[0]?.status === active
+        ? '!bg-active-status-bg text-active-status-text'
+        : '!bg-inactive-status-bg text-inactive-status-text'
+    "
+  >
+    {{ po?.projects[0]?.status | titlecase  }}
+  </div>
+</div>
+
+<div class="bg-light-blue mx-6 mb-4 pb-5 flex flex-row justify-start rounded-md px-6 py-4 gap-5">
+  <div class="min-w-[13%]">
+    <div class="font-bold text-head mb-2">PO Number</div>
+    <div>{{po?.poNo}}</div>
+  </div>
+  <div class="min-w-[13%]">
+    <div class="font-bold text-head mb-2">PO Start - End</div>
+    <div>{{po?.poStartDate | customDateFormat}} - {{po?.poEndDate | customDateFormat}}</div>
+  </div>
+  <div class="min-w-[13%]">
+    <div class="font-bold text-head mb-2">Total Budget</div>
+    <div>
+      {{po?.deFormattedPoTotalBudget }} {{po?.currency}}
+    </div>
+  </div>
+  <div class="min-w-[13%]">
+    <div class="font-bold text-head mb-2">Template</div>
+    <div>{{po?.poTimesheetTemplate?.templateName || 'No Template'}}</div>
+  </div>
+  <div class="min-w-[13%]">
+    <div class="font-bold text-head mb-2">Notes</div>
+    <div>{{po?.notes}}</div>
+  </div>
+</div>
+
+<div *ngFor="let abruf of abrufsDetails" class="bg-light-blue mx-6 mb-4 pb-5 flex flex-row justify-start rounded-md px-6 py-4 gap-5">
+  <div class="min-w-[13%]">
+    <div class="font-bold text-head mb-2">Abruf Name</div>
+    <div>{{abruf.abrufName}}</div>
+  </div>
+  <div class="min-w-[13%]">
+    <div class="font-bold text-head mb-2">Abruf Number</div>
+    <div>{{abruf.abrufNo}}</div>
+  </div>
+  <div class="min-w-[13%]">
+    <div class="font-bold text-head mb-2">Abruf Start - End</div>
+    <div>{{abruf.startDate | customDateFormat}} - {{abruf.endDate | customDateFormat}}</div>
+  </div>
+</div>
+
+<div class="mx-6 mb-3 pb-5" *ngFor="let pg of po?.pgs">
+  <mat-expansion-panel 
+    [expanded]="true"
+    (opened)="panelOpenState = true"
+    (closed)="panelOpenState = false"
+    class="mt-5"
+    [id]="'pg-' + pg.id">
+      <mat-expansion-panel-header>
+        <mat-panel-title>
+          <div class="font-bold text-lightBlack text-lg">PG: {{pg.pgName}}</div>
+          <div *ngIf="!panelOpenState">
+          </div>
+        </mat-panel-title>
+      </mat-expansion-panel-header>
+      <div class="border-2 border-light-blue mb-4 pb-5 flex flex-row justify-between rounded-md px-6 py-4 gap-3">
+        <div class="flex flex-row justify-start gap-4" *ngIf="pg.timesheet">
+          <div><span class="font-bold">On-site: </span>Total: {{pg.deFormattedTotalOnsiteHours}} hrs | {{pg.deFormattedTotalOnsiteDays}} days - Remaining: <span [ngClass]="pg.timesheet.remainingOnsiteHours.toString().startsWith('-') ? 'text-red-600' : ''">{{pg.timesheet.remainingOnsiteHours}} hrs | {{pg.timesheet.remainingOnsiteDays}} days</span></div>
+          <div *ngIf="po?.pgWithRemoteAndOnsite"><span class="font-bold">Remote: </span>Total: {{pg.deFormattedTotalRemoteHours}} hrs | {{pg.deFormattedTotalRemoteDays}} days - Remaining: <span [ngClass]="pg.timesheet.remainingRemoteHours.toString().startsWith('-') ? 'text-red-600' : ''">{{pg.timesheet.remainingRemoteHours}} hrs | {{pg.timesheet.remainingRemotedays}} days</span></div>
+        </div>
+        <div>
+          <span class="font-bold">Consultants: </span>
+            {{pg.pgConsultants === null ? 0 : pg.pgConsultants.length}}
+        </div>
+      </div>
+      <app-timesheet-consultant [po]="po" [pg]="pg" (consultantCount)="getConsultantCount($event)" (remainingBudget)="remainingBudgetApi($event)"></app-timesheet-consultant>
+      <!-- <div class="p-5 bg-lightGrey rounded-md text-base font-medium">
+
+        <div class="flex items-end justify-end mb-1 mx-2 pt-1">
+          <button
+            mat-raised-button
+            class="text-primary mat-create"
+            (click)="assignConsultantToPG(po, pg)"
+          >
+            <mat-icon class="mat-18"><span class="material-symbols-outlined -mt-0.5">
+                add
+              </span></mat-icon>Add Consultant
+          </button>
+        </div>
+        <div class="font-normal mb-7 text-lg text-grey-600 flex justify-center">No Consultant assigned...</div>
+
+      </div> -->
+  </mat-expansion-panel>
+</div>
+
+<app-upload-progress-overlay *ngIf="isPOLoading"></app-upload-progress-overlay>

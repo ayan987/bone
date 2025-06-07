@@ -1,0 +1,86 @@
+<div class="flex items-center justify-between px-6 py-3 bg-grey-200">
+  <div class="font-bold text-xl text-grey-600">
+    {{ heading }}
+  </div>
+  <div class="cursor-pointer flex items-center" (click)="closeDialog(false)">
+    <mat-icon>close</mat-icon>
+  </div>
+</div>
+<div matDialogContent>
+    <div class="mb-3" [ngClass]="data?.savedEntriesCount === 0 ? 'text-red-600' : 'text-active-status-text'">
+        {{ message }}
+    </div>
+    <h3 *ngIf="data?.notSavedEntries?.length" class="text-red-600">{{ tableHead }}</h3>
+    <div class="entry-table" [ngClass]="data?.notSavedEntries?.length ? 'border' : ''">
+        <table
+          mat-table
+          [dataSource]="data?.notSavedEntries"
+          *ngIf="data?.notSavedEntries?.length"
+          class="table-container"
+        >
+          <!-- Reason Column -->
+          <ng-container matColumnDef="reason">
+            <th mat-header-cell *matHeaderCellDef>Reason</th>
+            <td mat-cell *matCellDef="let entry">
+               <div class="text-red-600">{{ entry.reason }}</div>
+            </td>
+          </ng-container>
+
+          <!-- PO No Column -->
+          <ng-container matColumnDef="poNo">
+            <th mat-header-cell *matHeaderCellDef>PO No</th>
+            <td mat-cell *matCellDef="let entry">{{ entry.poNo }}</td>
+          </ng-container>
+
+          <!-- Month/Year Column -->
+          <ng-container matColumnDef="monthYear">
+            <th mat-header-cell *matHeaderCellDef>Month/Year</th>
+            <td mat-cell *matCellDef="let entry">{{ entry.monthYear }}</td>
+          </ng-container>
+
+          <!-- Abruf No Column -->
+          <ng-container matColumnDef="abrufNo">
+            <th mat-header-cell *matHeaderCellDef>Abruf No</th>
+            <td mat-cell *matCellDef="let entry">
+                <div class="overflow-hidden text-ellipsis whitespace-nowrap" matTooltip="{{ entry.abrufNo }}">{{ entry.abrufNo }}</div>
+            </td>
+          </ng-container>
+
+          <!-- Name Column -->
+          <ng-container matColumnDef="name">
+            <th mat-header-cell *matHeaderCellDef>Name</th>
+            <td mat-cell *matCellDef="let entry">{{ entry.name }}</td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="displayedColumns" class="uppercase !bg-card-blue"></tr>
+          <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+        </table>
+    </div>
+    <div *ngIf="!showGoToTimesheets" class="flex flex-row items-center mt-3">
+      <span class="material-symbols-outlined !text-[18px]"> info </span>
+      <span class="text-grey-600 italic text-sm font-bold pl-2">(Regeneration of this entry can be done from the view timesheet tab)</span>
+    </div>
+</div>
+<hr class="border-grey-300" />
+<mat-dialog-actions align="end" class="!py-[15px] !px-5">
+  <button
+    mat-stroked-button
+    class="mat-cancel !rounded-[50px]"
+    type="button"
+    (click)="closeDialog(false)"
+    id="btNo"
+    mat-dialog-close
+  >
+    Close
+  </button>
+  <button
+    *ngIf="showGoToTimesheets"
+    mat-raised-button
+    class="mat-create !rounded-[50px]"
+    id="btnYes"
+    type="submit"
+    (click)="closeDialog(true)"
+  >
+    Go to Timesheets
+  </button>
+</mat-dialog-actions>

@@ -1,0 +1,42 @@
+<form [formGroup]="createCommentForm">
+
+    <mat-form-field appearance="outline" class="w-full">
+      <textarea
+        id="txtDescription"
+        matInput
+        class="text-area"
+        placeholder="Enter a comment"
+        formControlName="comment"
+        #comment
+      ></textarea>
+      <mat-hint align="start" [ngClass]="comment.value.length > 1000 ? 'text-red-500' : ''" class="text-grey-600">Max. 1000 characters</mat-hint>
+      <mat-hint
+        align="end"
+        [ngClass]="comment.value.length > 1000 ? 'text-red-500' : ''"
+        >{{ comment.value.length }} / 1000</mat-hint>
+      <mat-error *ngIf=" this.createCommentForm.get('comment')?.touched && this.createCommentForm.get('comment')?.hasError('required')">
+        Comment is required
+      </mat-error>
+    </mat-form-field>
+  <div class="button flex justify-end gap-2 mt-2">
+    <button
+      id="btnCancel"
+      type="button"
+      mat-stroked-button
+      class="!rounded-full text-xs px-2 py-1 !min-w-0 h-auto"
+      (click)="cancelComment()"
+    >
+      Cancel
+    </button>
+    <button
+      id="btnSave"
+      type="submit"
+      mat-raised-button
+      class="!rounded-full text-xs px-2 py-1 mat-create commentBtn"
+      (click)="saveComment()"
+      [disabled]="createCommentForm.invalid || createCommentForm.pristine"
+    >
+      Save
+    </button>
+  </div>
+</form>

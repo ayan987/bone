@@ -1,0 +1,184 @@
+<mat-card class="mt-10 mx-6">
+  <mat-card-content class="bg-card-blue !p-0">
+    <!-- Header Section -->
+    <div fxLayout="row" fxLayoutAlign="center center" fxLayoutGap="6px" class="flex items-center p-4">
+      <div class="text-primary text-lg !mb-0 font-bold flex-grow">Holiday Management</div>
+    </div>
+
+    <!-- Filter Section -->
+    <div class="flex justify-between p-4 bg-white">
+      <!-- Left side filters -->
+      <div class="flex gap-4">
+        <!-- Location Select -->
+         <div>
+          <div class="text-base mb-2 font-medium">Location</div>
+          <mat-form-field class="w-full custom-form-field" appearance="outline">
+            <mat-select [formControl]="locationCtrl" placeholder="Select a location">
+              @for (location of locations; track $index) {
+                <mat-option [value]="location">
+                  {{location.cityName}} ({{location.countryCode}})
+                </mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+         </div>
+
+        <!-- Year Select -->
+        <div>
+          <div class="text-base mb-2 font-medium">Year</div>
+          <mat-form-field class="w-full custom-form-field" appearance="outline">
+            <mat-select [formControl]="yearCtrl" placeholder="Select a year">
+              @for (year of years; track $index) {
+                <mat-option [value]="year">
+                  {{year}}
+                </mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+        </div>
+      </div>
+
+      <!-- Right side create form -->
+      @if (showCreateForm) {
+        <form [formGroup]="createHolidayForm" class="flex items-center gap-4" #holidayDirective="ngForm">
+          <div>
+            <div class="text-base mb-2 font-medium">Month</div>
+            <mat-form-field class="w-full custom-form-field" appearance="outline">
+              <mat-select formControlName="month" placeholder="Select a Month">
+                @for (month of months; track $index) {
+                  <mat-option [value]="month">
+                    {{month}}
+                  </mat-option>
+                }
+              </mat-select>
+              @if (createHolidayForm.controls['month'].hasError('required')) {
+                <mat-error>Month is required.</mat-error>
+              }
+            </mat-form-field>
+          </div>
+
+          <!-- Day Select -->
+          <div>
+            <div class="text-base mb-2 font-medium">Day</div>
+            <mat-form-field class="w-full custom-form-field" appearance="outline">
+              <mat-select formControlName="day" placeholder="Select a Day">
+                @for (day of daysInMonth; track $index) {
+                  <mat-option [value]="day">
+                    {{day}}
+                  </mat-option>
+                } 
+              </mat-select>
+            </mat-form-field>
+          </div>
+
+          <!-- Holiday Name Input -->
+          <div>
+            <div class="text-base mb-2 font-medium">Holiday Name</div>
+            <mat-form-field class="w-full custom-form-field" appearance="outline">
+              <input matInput formControlName="name" placeholder="Enter holiday name">
+              <mat-hint
+                align="end"
+                [ngClass]="createHolidayForm.controls['name'].value?.length > 100 ? 'text-red-500' : ''"
+                >{{ createHolidayForm.controls['name'].value?.length }} / 50</mat-hint
+              >
+              @if (createHolidayForm.controls['name'].hasError('required')) {
+                <mat-error>Holiday name is required.</mat-error>
+              }
+            </mat-form-field>
+          </div>
+
+          <div class="flex items-center gap-3 button-container pt-6">
+            <button 
+              mat-raised-button 
+              color="primary" 
+              [disabled]="createHolidayForm.invalid"
+              (click)="createHoliday()"
+            >
+              Create Holiday
+            </button>
+              <span class="text-gray-500">or</span>
+              <div
+                [matTooltip]="hasHolidays ? 'Copy from previous year is only possible if there are no holidays created' : ''"
+                [matTooltip]="disableCopy ? 'Copy from previous year is not possible for the previous year.' : ''"  
+              >
+                <button 
+                  mat-raised-button 
+                  color="primary" 
+                  [disabled]="hasHolidays || disableCopy"
+                  (click)="copyFromPreviousYear()"
+                >
+                  Copy dates from previous year
+                </button>
+              </div>
+          </div>
+        </form>
+      }
+    </div>
+
+    <!-- Calendar Grid -->
+    <div class="grid grid-cols-6 gap-3 p-4 bg-white">
+      @for (month of monthsData; track $index) {
+        <mat-card class="month-card">
+          <mat-card-header>
+            <mat-card-title class="text-primary text-sm">{{month.name}}</mat-card-title>
+          </mat-card-header>
+          <mat-card-content>
+            <div class="min-h-[150px] holiday-list">
+              @if (month.holidays.length > 0) {
+                @for (holiday of month.holidays; track $index) {
+                  <div class="holiday-item group">
+                    @if (editingHoliday?.day === holiday.day 
+                      && editingHoliday?.month === month.name 
+                      && editingHoliday?.id === (month.name + '-' + holiday.day + '-' + holiday.name)) {
+                      <span class="holiday-date">{{holiday.day}}</span>
+                      <input 
+                        #editInput
+                        [value]="holiday.name"
+                        maxlength="50"
+                        (keyup.enter)="saveHoliday(month.name, holiday, editingHoliday!.day, editInput.value)"
+                        class="holiday-edit-input"
+                      >
+                      <div class="holiday-actions">
+                        <mat-icon 
+                          class="save-icon" 
+                          (click)="saveHoliday(month.name, holiday, editingHoliday!.day, editInput.value)"
+                        >
+                          save
+                        </mat-icon>
+                        <mat-icon 
+                          class="cancel-icon" 
+                          (click)="saveHoliday(month.name, holiday, editingHoliday!.day, editInput.value)"
+                        >
+                          cancel
+                        </mat-icon>
+                      </div>
+                    } @else {
+                        <span class="holiday-date">{{holiday.day}}</span>
+                        <span class="holiday-name" [matTooltip]="holiday.name">{{holiday.name}}</span>
+                        <div class="holiday-actions opacity-0 group-hover:opacity-100">
+                          <mat-icon 
+                            class="edit-icon" 
+                            (click)="editHoliday(month.name, holiday)"
+                          >
+                            edit
+                          </mat-icon>
+                          <mat-icon 
+                            class="delete-icon" 
+                            (click)="deleteHoliday(month.name, holiday)"
+                          >
+                            delete
+                          </mat-icon>
+                        </div>
+                    }
+                  </div>
+                }
+              } @else {
+                <div class="no-holidays">No holidays</div>
+              }
+            </div>
+          </mat-card-content>
+        </mat-card>
+      }
+    </div>
+  </mat-card-content>
+</mat-card>

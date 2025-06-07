@@ -1,0 +1,364 @@
+<div class="flex flex-row justify-between px-6 py-3 bg-grey-200">
+  <div class="font-bold text-xl text-grey-600">
+    @if (checkModeAsUpdate()) {
+      Edit
+    } @else {
+      Create
+    }
+    Purchase Order
+  </div>
+  <div class="cursor-pointer flex items-center" (click)="closeDialog(false)" onKeyPress="">
+    <mat-icon>close</mat-icon>
+  </div>
+</div>
+<form [formGroup]="createPOForm">
+  <div class="py-6 max-h-[578px] px-6 overflow-auto">
+
+    <div class="flex justify-between gap-5">
+      <div class="w-full">
+        <!--Project Name-->
+        <div class="flex flex-start gap-3">
+          <div class="text-base mb-2 font-medium">Select Project <sup>*</sup></div>
+        </div>
+        <mat-form-field class="w-full custom-form-field">
+          <mat-select [formControl]="projectCtrl" placeholder="Select a project with client associated..." #singleSelect>
+            <mat-option>
+              <ngx-mat-select-search [formControl]="projectFilterCtrl" placeholderLabel="search..."
+                noEntriesFoundLabel="No matching Project found..."></ngx-mat-select-search>
+            </mat-option>
+
+            <mat-option *ngFor="let prj of filteredProjects | async" [value]="prj">
+              {{prj.projectName}} ({{prj.shortName}})
+            </mat-option>
+          </mat-select>
+          <mat-error *ngIf="projectCtrl.touched && projectCtrl.hasError('required')">Project is required</mat-error>
+          <mat-hint align="end" class="italic" *ngIf="this.data?.endClients != null">{{this.data.endClients.name}}</mat-hint>
+        </mat-form-field>
+      </div>
+    </div>
+    <div class="flex justify-between gap-3 ">
+      <div class="w-full">
+        <!--Template selection-->
+        <div class="flex flex-start gap-3">
+          <div class="text-base mb-2 font-medium">Select Template (Optional)</div>
+        </div>
+        <mat-form-field class="w-full custom-form-field">
+          <mat-select [formControl]="templateCtrl" placeholder="Select a timesheet template..." #singleSelect>
+            <mat-option>
+              <ngx-mat-select-search [formControl]="templateFilterCtrl" placeholderLabel="search..."
+                noEntriesFoundLabel="No matching template found..."></ngx-mat-select-search>
+            </mat-option>
+            <mat-option>--Select--</mat-option>
+            <mat-option *ngFor="let template of filteredTemplates | async" [value]="template">
+              {{template.templateName}}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+      </div>
+
+      <div class="w-full">
+        <!--Template selection-->
+        <div class="flex flex-start gap-3">
+          <div class="text-base mb-2 font-medium">VC ID (Optional)</div>
+        </div>
+        <mat-form-field appearance="outline" class="w-full custom-form-field custom-color">
+          <input matInput formControlName="vcId" placeholder="Enter VC ID" />
+        </mat-form-field>
+      </div>
+    </div>
+
+
+    <div *ngIf="this.projectCtrl.value?.abrufRequired"
+      class="text-base font-bold mb-3 flex flex-row items-center gap-4">
+      <div>Select Abruf(s)</div>
+    </div>
+
+    <!--Abruf Details-->
+    <div *ngIf="this.projectCtrl.value?.abrufRequired" formArrayName="abrufs" class="max-h-[355px] overflow-auto mb-5">
+      <div *ngFor="let other of abrufs?.controls; let i = index"
+        class="p-5 rounded-lg mb-4 bg-card-back last:mb-0 mr-1 h-24">
+        <div [formGroupName]="i" class="flex gap-2">
+          <mat-form-field appearance="outline" class="grow custom-form-field custom-color mt-1">
+            <mat-select #abrufSelect formControlName="abruf" placeholder="Abruf {{i+1}}..." [compareWith]="compareClients">
+              <mat-option *ngFor="let item of filteredAbrufs" [value]="item">
+                <span><span class="text-red-600">Abruf Name - </span> {{ item.abrufName }} , </span>
+                <span><span class="text-red-600">Abruf Number - </span> {{ item.abrufNo }} , </span>
+                <span><span class="text-red-600">Start Date - </span> {{ item.startDate }} , </span>
+                <span><span class="text-red-600">End Date - </span> {{ item.endDate }}</span>
+              </mat-option>
+            </mat-select>
+            <mat-error *ngIf="other.get('abruf')?.hasError('required')">This field is required.</mat-error>
+            <mat-error *ngIf="other.get('abruf')?.hasError('duplicate')">The Abruf is already selected</mat-error>
+          </mat-form-field>
+          <mat-icon class="delete-icon flex-none mt-3" matTooltip="Remove Abruf {{i+1}}" *ngIf="abrufs.length > 1"
+            (click)="deleteAbruf(i)" onKeyPress="">delete_forever</mat-icon>
+        </div>
+      </div>
+    </div>
+
+    <div *ngIf="this.projectCtrl.value?.abrufRequired" class="flex flex-row justify-end mt-4">
+      <div class="flex items-center pr-2 cursor-pointer" (click)="addAbruf()" onKeyPress=""  [ngClass]="isAbrufValid ? 'text-blue cursor-pointer' : 'text-grey-400 cursor-default'">
+        <mat-icon>add</mat-icon>Select more Abruf(s)
+      </div>
+    </div>
+
+    <!-- PO Details -->
+    <div class="text-base font-bold mb-3">PO Details</div>
+
+    <div class="p-5 rounded-lg mb-4 bg-card-back">
+
+      <div class="flex flex-row justify-start gap-5 flex-wrap mb-4">
+
+        <!-- PO Number -->
+        <div class="w-[24%]">
+          <div class="mb-3">PO Number <sup>*</sup></div>
+          <mat-form-field appearance="outline" class="w-full custom-form-field custom-color">
+            <input matInput formControlName="poNo" #poNumber placeholder="Enter PO Number" />
+            <mat-hint align="end" [ngClass]="poNumber.value.length > 50 ? 'text-red-500' : ''">{{ poNumber.value.length }} / 50</mat-hint>
+            <mat-hint align="start" [ngClass]="poNumber.value.length > 50 ? 'text-red-500' : ''">Max. 50 Characters</mat-hint>
+            <mat-error *ngIf="createPOForm.get('poNo')?.hasError('required')">This field is required.</mat-error>
+            <mat-error *ngIf="createPOForm.get('poNo')?.hasError('duplicatePoNo')">PO number already exists.</mat-error>
+            <mat-error *ngIf="createPOForm.get('poNo')?.touched && createPOForm.get('poNo')?.hasError('pattern')">Invalid inputs</mat-error>
+          </mat-form-field>
+        </div>
+
+        <!-- PO Start Date -->
+        <div class="w-[24%]">
+          <div class="mb-3">PO Start Date <sup>*</sup></div>
+          <mat-form-field appearance="outline" class="w-full custom-form-field custom-color">
+            <input matInput [matDatepicker]="startDatePicker" formControlName="poStartDate" placeholder="DD.MM.YYYY"
+              restrictDate />
+            <mat-datepicker-toggle class="date-picker" matSuffix [for]="startDatePicker"></mat-datepicker-toggle>
+            <mat-datepicker #startDatePicker></mat-datepicker>
+            <mat-error *ngIf="createPOForm.get('poStartDate')?.hasError('required')">This field is required (DD.MM.YYYY)</mat-error>
+            <mat-error *ngIf="createPOForm.get('poStartDate')?.hasError('startAfterEnd')">PO Start Date cannot be after
+              PO End Date.</mat-error>
+            <mat-error *ngIf="createPOForm.get('poStartDate')?.hasError('poStartDateError')">Invalid Start Date</mat-error>
+          </mat-form-field>
+        </div>
+
+        <!-- PO End Date -->
+        <div class="w-[24%]">
+          <div class="mb-3">PO End Date <sup>*</sup></div>
+          <mat-form-field appearance="outline" class="w-full custom-form-field custom-color">
+            <input matInput [matDatepicker]="endDatePicker" formControlName="poEndDate" placeholder="DD.MM.YYYY"
+              restrictDate />
+            <mat-datepicker-toggle class="date-picker" matSuffix [for]="endDatePicker"></mat-datepicker-toggle>
+            <mat-datepicker #endDatePicker></mat-datepicker>
+            <mat-error *ngIf="createPOForm.get('poEndDate')?.hasError('required')">This field is required (DD.MM.YYYY)</mat-error>
+            <mat-error *ngIf="createPOForm.get('poEndDate')?.hasError('endBeforeStart')">PO End Date cannot be before PO Start Date.</mat-error>
+            <mat-error *ngIf="createPOForm.get('poEndDate')?.hasError('poEndDateError')">Invalid End Date</mat-error>
+          </mat-form-field>
+        </div>
+
+      </div>
+
+      <div class="flex flex-start justify-start gap-5 mb-2">
+
+        <!-- PO Amount -->
+        <div class="w-[24%]">
+          <div class="mb-3">PO Amount</div>
+          <mat-form-field appearance="outline" class="w-full custom-form-field custom-color custom-form-field-readonly">
+            <input matInput placeholder="PO Amount" [readonly]="true" formControlName="poTotalBudget" />
+            <span matTextSuffix>{{selectedCurrency}}</span>
+          </mat-form-field>
+        </div>
+
+        <!-- PO Amount Currency -->
+        <div class="w-[24%]">
+          <div class="mb-3">Select Currency</div>
+          <mat-form-field appearance="outline" class="w-full custom-form-field custom-color" id = "selCurrency">
+            <mat-select formControlName="currency" (selectionChange)="onselCurrencyChange($event)">
+              <mat-option value="CHF">CHF</mat-option>
+              <mat-option value="EUR" selected>EUR</mat-option>
+              <mat-option value="GBP">GBP</mat-option>
+              <mat-option value="USD">USD</mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+
+      </div>
+
+      <div class="mb-3">Notes</div>
+      <mat-form-field appearance="outline" class="w-full  custom-color">
+        <textarea matInput formControlName="notes" class="text-area" placeholder="Notes..." rows="3" #poNotes></textarea>
+        <mat-hint align="end" [ngClass]="poNotes.value.length > 1000 ? 'text-red-500' : ''">{{ poNotes.value.length }} / 1000</mat-hint>
+        <mat-hint align="start" [ngClass]="poNotes.value.length > 1000 ? 'text-red-500' : ''" class="text-grey-600">Max. 1000 characters</mat-hint>
+        <mat-error *ngIf="createPOForm.get('notes')?.hasError('required')">This field is required.</mat-error>
+      </mat-form-field>
+      <div class="flex flex-col mt-2">
+        <mat-checkbox color="primary" formControlName="pgWithRemoteAndOnsite" id="chkRemoteAndOnsite"
+           (click)="onChkRemoteAndOnsiteChecked()" class="!ml-[-10px]">Price groups have both on-site and remote rates</mat-checkbox>
+      </div>
+      <div *ngIf="hasRemoteTimesheet" class="flex flex-row items-center">
+        <span class="material-symbols-outlined !text-[18px]"> info </span>
+        <span class="text-grey-600 italic !text-[10px] font-bold pl-2">(There are already timesheet entries for this PO. You can not change the value of checkbox)</span>
+      </div>
+    </div>
+
+    <!-- PO Details ends above-->
+    <!-- PG details starts here -->
+     <div *ngIf="pgFormArray.length > 0">
+      <div class="text-base font-bold mt-5 mb-3">Price Group Details</div>
+      <div formArrayName="pgs">
+        <div *ngFor="let pgAbstractControl of pgFormArray?.controls; let i = index">
+          <div class="p-5 rounded-lg mb-4 bg-card-back">
+            <div [formGroupName]="i">
+              <!-- PG Name -->
+              <div class="w-full flex flex-row mb-3 justify-between">
+                <div class="w-[24%]">
+                  <div class="mb-3">PG Name <sup>*</sup></div>
+                  <mat-form-field appearance="outline" class="w-full custom-form-field custom-color">
+                    <input matInput formControlName="pgName" #pgName placeholder="Enter PG Name" id="txtPgName{{i}}"/>
+                    <mat-hint align="end" [ngClass]="pgName.value.length > 100 || pgName.value.length < 2  ? 'text-red-500' : ''">{{ pgName.value.length }} / 100</mat-hint>
+                    <mat-hint align="start" [ngClass]="pgName.value.length > 100 || pgName.value.length < 2 ? 'text-red-500' : ''" class="text-grey-600">Min. 2, Max. 100 characters</mat-hint>
+                    <mat-error
+                      *ngIf="pgAbstractControl.get('pgName')?.touched && pgAbstractControl.get('pgName')?.hasError('required')">This
+                      field is required</mat-error>
+                    <mat-error
+                      *ngIf="pgAbstractControl.get('pgName')?.touched && pgAbstractControl.get('pgName')?.hasError('pattern')">Invalid
+                      inputs</mat-error>
+                      <mat-error *ngIf="pgAbstractControl.get('pgName')?.touched && pgAbstractControl.get('pgName')?.hasError('duplicate')">
+                        This PG Name already exists
+                      </mat-error>
+                  </mat-form-field>
+                </div>
+                <div>
+                  <mat-icon class="delete-icon flex-none mt-3" matTooltip="Remove PG {{i+1}}"
+                    (click)="deletePg(i, pgAbstractControl.get('id')?.value, pgAbstractControl.get('pgName')?.value)" onkeypress="handleKeyPressForDeletePg($event, i)">delete_forever</mat-icon>
+                </div>
+              </div>
+              <!--Onsite-->
+              <div class="flex flex-start justify-start gap-5 flex-wrap onsite mb-3">
+                <!-- Total onsite hours -->
+                <div class="w-[18%] flex items-center justify-center font-bold text-md">
+                  On-site
+                </div>
+                <div class="w-[18%]">
+                  <div class="mb-3">Total Hours <sup>*</sup></div>
+                  <mat-form-field appearance="outline" class="w-full custom-form-field custom-color">
+                    <input matInput formControlName="totalOnsiteHours" placeholder="Total hours" appDecimalRestriction
+                      id="txtTotalOnsiteHours{{i}}" (blur)="formatAndValidate('pgs.' + i + '.totalOnsiteHours')" />
+                    <mat-error
+                      *ngIf="pgAbstractControl.get('totalOnsiteHours')?.touched && pgAbstractControl.get('totalOnsiteHours')?.hasError('required')">This
+                      field is required</mat-error>
+                      <mat-error
+                      *ngIf="pgAbstractControl.get('totalOnsiteHours')?.touched && pgAbstractControl.get('totalOnsiteHours')?.hasError('pattern')">Invalid
+                      inputs</mat-error>
+                  </mat-form-field>
+
+                </div>
+                <!-- Hourly rate -->
+                <div class="w-[18%]">
+                  <div class="mb-3">Hourly rate <sup>*</sup></div>
+                  <mat-form-field appearance="outline" class="w-full custom-form-field custom-color">
+                    <input matInput formControlName="onsiteRate" placeholder="Hourly rates" appDecimalRestriction
+                      id="txtOnsiteRate{{i}}" (blur)="formatAndValidate('pgs.' + i + '.onsiteRate')" />
+                    <mat-error
+                      *ngIf="pgAbstractControl.get('onsiteRate')?.touched && pgAbstractControl.get('onsiteRate')?.hasError('required')">This
+                      field is required</mat-error>
+                      <mat-error
+                      *ngIf="pgAbstractControl.get('onsiteRate')?.touched && pgAbstractControl.get('onsiteRate')?.hasError('pattern')">Invalid
+                      inputs</mat-error>
+                  </mat-form-field>
+                </div>
+                <!-- Total onsite budget -->
+                <div class="w-[18%]">
+                  <div class="mb-3">Total</div>
+                  <mat-form-field appearance="outline" class="w-full custom-form-field custom-color custom-form-field-readonly">
+                    <input matInput formControlName="totalOnsiteBudget" placeholder="Budget"
+                      id="txtTotalOnsiteBudget{{i}}" [readonly]="true" /><span matTextSuffix>{{selectedCurrency}}</span>
+                  </mat-form-field>
+                </div>
+                <!-- Total days -->
+                <div class="w-[18%]">
+                  <div class="mb-3">Total days</div>
+                  <mat-form-field appearance="outline" class="w-full custom-form-field custom-color custom-form-field-readonly">
+                    <input matInput formControlName="totalOnsiteDays" placeholder="Total days"
+                      id="txtTotalOnsiteDays{{i}}" [readonly]="true" />
+                  </mat-form-field>
+                </div>
+              </div>
+              <!--Remote-->
+              <div class="flex flex-start justify-start gap-5 flex-wrap">
+                <!-- Total onsite hours -->
+                <div class="w-[18%] flex items-center justify-center font-bold text-md">
+                  Remote
+                </div>
+                <div class="w-[18%]">
+                  <div class="mb-3">Total Hours <sup>*</sup></div>
+                  <mat-form-field appearance="outline" class="w-full custom-form-field custom-color"
+                       [ngClass]="{'custom-form-field-readonly': readonlyControls['totalRemoteHours']}">
+                    <input matInput formControlName="totalRemoteHours" placeholder="Total Hours" appDecimalRestriction
+                      id="txtTotalRemoteHours{{i}}" (blur)="formatAndValidate('pgs.' + i + '.totalRemoteHours')" [readonly]="readonlyControls['totalRemoteHours']"/>
+                    <mat-error
+                      *ngIf="pgAbstractControl.get('totalRemoteHours')?.touched && pgAbstractControl.get('totalRemoteHours')?.hasError('required')">
+                      This  field is required</mat-error>
+                      <mat-error
+                      *ngIf="pgAbstractControl.get('totalRemoteHours')?.touched && pgAbstractControl.get('totalRemoteHours')?.hasError('pattern')">Invalid
+                      inputs</mat-error>
+                  </mat-form-field>
+                </div>
+                <!-- Hourly rate -->
+                <div class="w-[18%]">
+                  <div class="mb-3">Hourly rate <sup>*</sup></div>
+                  <mat-form-field appearance="outline" class="w-full custom-form-field custom-color"
+                       [ngClass]="{'custom-form-field-readonly': readonlyControls['remoteRate']}">
+                    <input matInput formControlName="remoteRate" placeholder="Hourly rate" appDecimalRestriction
+                      id="txtRemoteRate{{i}}" (blur)="formatAndValidate('pgs.' + i + '.remoteRate')" [readonly]="readonlyControls['remoteRate']"/>
+                    <mat-error
+                      *ngIf="pgAbstractControl.get('remoteRate')?.touched && pgAbstractControl.get('remoteRate')?.hasError('required')">This
+                      field is required</mat-error>
+                      <mat-error
+                      *ngIf="pgAbstractControl.get('remoteRate')?.touched && pgAbstractControl.get('remoteRate')?.hasError('pattern')">Invalid
+                      inputs</mat-error>
+                  </mat-form-field>
+                </div>
+                <!-- Total Remote budget -->
+                <div class="w-[18%]">
+                  <div class="mb-3">Total</div>
+                  <mat-form-field appearance="outline" class="w-full custom-form-field custom-color custom-form-field-readonly">
+                    <input matInput formControlName="totalRemoteBudget" placeholder="Budget"
+                      id="txtTotalRemoteBudget{{i}}" [readonly]="true" /><span matTextSuffix>{{selectedCurrency}}</span>
+                  </mat-form-field>
+                </div>
+                <!-- Total days -->
+                <div class="w-[18%]">
+                  <div class="mb-3">Total days</div>
+                  <mat-form-field appearance="outline" class="w-full custom-form-field custom-color custom-form-field-readonly">
+                    <input matInput formControlName="totalRemoteDays" placeholder="Total Days"
+                      id="txtTotalRemoteDays{{i}}" [readonly]="true" />
+                  </mat-form-field>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="flex flex-row justify-end mt-4" >
+      <div onKeyPress="" (click)="addNewPg()" class="flex items-center pr-2" [ngClass]="isPgFormValid || pgFormArray.length < 1 ? 'text-blue cursor-pointer' : 'text-grey-400 cursor-default'"><mat-icon>add</mat-icon>Add New PG
+      </div>
+    </div>
+    <!-- PG details ends here -->
+
+
+  </div>
+
+  <hr class="border-grey-300 mb-4" />
+
+  <div class="button flex justify-end px-6 gap-3 mb-4">
+    <button id="btnCancel" type="button" mat-stroked-button class="mat-cancel !rounded-[50px]"
+      (click)="closeDialog(false)">
+      Cancel
+    </button>
+    <button id="btnSave" type="submit" mat-raised-button class="mat-create !rounded-[50px]"
+      [disabled]="!createPOForm.valid || isCreatingPO || !createPOForm.dirty" (click)="savePO()">
+      Save
+    </button>
+  </div>
+
+</form>
+
+<app-upload-progress-overlay *ngIf="isCreatingPO"></app-upload-progress-overlay>

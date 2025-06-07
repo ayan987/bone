@@ -1,0 +1,12 @@
+<mat-tab-group class="mt-8" mat-stretch-tabs="false" mat-align-tabs="start" [(selectedIndex)]="selectedTabIndex" (selectedTabChange)="onTabChange($event)">
+    <mat-tab label="Clients">
+        <ng-template matTabContent>
+            <app-client-list></app-client-list>
+        </ng-template>
+    </mat-tab>
+    <mat-tab label="End Clients">
+        <ng-template matTabContent>
+            <app-end-client-list></app-end-client-list>
+        </ng-template>
+    </mat-tab>
+</mat-tab-group>

@@ -1,0 +1,22 @@
+<div class="flex items-center justify-between px-6 py-3 bg-grey-200">
+    <div class="font-bold text-xl text-grey-600">{{ content[1] === '' ? 'Confirm Close' : content[1] }}</div>
+    <div class="cursor-pointer flex items-center" (click)="closeDialog(false)">
+      <mat-icon>close</mat-icon>
+    </div>
+  </div>
+  <mat-dialog-content class="text-center !text-black">
+    {{ content[0] }}
+  </mat-dialog-content>
+  <hr class="border-grey-300" />
+  <mat-dialog-actions align="end" class="!py-[15px] !px-5">
+    <button
+      mat-raised-button
+      class="mat-create !rounded-[50px]"
+      id="btnYes"
+      type="submit"
+      (click)="closeDialog(true)"
+    >
+      Ok
+    </button>
+  </mat-dialog-actions>
+  

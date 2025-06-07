@@ -1,0 +1,3 @@
+<app-timesheet-overview [tableData]="dataSource" [isGeneratedView]="false" [tableHead]="tableHead"
+ (applyFiltersEvent)="getAllActiveConsultants($event)" (activeTab)="onActiveTabChange($event)"></app-timesheet-overview>
+<app-upload-progress-overlay *ngIf="isLoading"></app-upload-progress-overlay>

@@ -1,0 +1,112 @@
+{
+    "consultants": [
+        {
+            "firstName": "Anna",
+            "lastName": "Braun",
+            "assignmentId": null,
+            "id": "bb1eaf0a7d8644f0b4bdc986a6f86546fyfgh47a",
+            "startDate": "09.08.2024",
+            "endDate": "09.08.2024",
+            "status": "ACTIVE"
+        },
+        {
+            "firstName": "Max Maxxx",
+            "lastName": "Mustermann",
+            "assignmentId": null,
+            "id": "bb1eaf0a7d8644f0b4bdc986a6f86546fyfgh47a",
+            "startDate": "09.08.2024",
+            "endDate": "09.08.2024",
+            "status": "ACTIVE"
+        },
+        {
+            "firstName": "John",
+            "lastName": "Doe",
+            "assignmentId": null,
+            "id": "bb1eaf0a7d8644f0b4bdc986a6f86546fyfgh47a",
+            "startDate": "09.08.2024",
+            "endDate": "09.08.2024",
+            "status": "ACTIVE"
+        },
+        {
+            "firstName": "Jane",
+            "lastName": "Smith",
+            "assignmentId": null,
+            "id": "bb1eaf0a7d8644f0b4bdc986a6f86546fyfgh47a",
+            "startDate": "09.08.2024",
+            "endDate": "09.08.2024",
+            "status": "ACTIVE"
+        },
+        {
+            "firstName": "Michael",
+            "lastName": "Johnson",
+            "assignmentId": null,
+            "id": "bb1eaf0a7d8644f0b4bdc986a6f86546fyfgh47a",
+            "startDate": "09.08.2024",
+            "endDate": "09.08.2024",
+            "status": "ACTIVE"
+        },
+        {
+            "firstName": "Emily",
+            "lastName": "Brown",
+            "assignmentId": null,
+            "id": "bb1eaf0a7d8644f0b4bdc986a6f86546fyfgh47a",
+            "startDate": "09.08.2024",
+            "endDate": "09.08.2024",
+            "status": "ACTIVE"
+        },
+        {
+            "firstName": "David",
+            "lastName": "Wilson",
+            "assignmentId": null,
+            "id": "bb1eaf0a7d8644f0b4bdc986a6f86546fyfgh47a",
+            "startDate": "09.08.2024",
+            "endDate": "09.08.2024",
+            "status": "ACTIVE"
+        },
+        {
+            "firstName": "Olivia",
+            "lastName": "Taylor",
+            "assignmentId": null,
+            "id": "bb1eaf0a7d8644f0b4bdc986a6f86546fyfgh47a",
+            "startDate": "09.08.2024",
+            "endDate": "09.08.2024",
+            "status": "ACTIVE"
+        },
+        {
+            "firstName": "Daniel",
+            "lastName": "Anderson",
+            "assignmentId": null,
+            "id": "bb1eaf0a7d8644f0b4bdc986a6f86546fyfgh47a",
+            "startDate": "09.08.2024",
+            "endDate": "09.08.2024",
+            "status": "ACTIVE"
+        },
+        {
+            "firstName": "Sophia",
+            "lastName": "Thomas",
+            "assignmentId": null,
+            "id": "bb1eaf0a7d8644f0b4bdc986a6f86546fyfgh47a",
+            "startDate": "09.08.2024",
+            "endDate": "09.08.2024",
+            "status": "ACTIVE"
+        },
+        {
+            "firstName": "James",
+            "lastName": "Roberts",
+            "assignmentId": null,
+            "id": "bb1eaf0a7d8644f0b4bdc986a6f86546fyfgh47a",
+            "startDate": "09.08.2024",
+            "endDate": "09.08.2024",
+            "status": "ACTIVE"
+        },
+        {
+            "firstName": "Isabella",
+            "lastName": "Harris",
+            "assignmentId": null,
+            "id": "bb1eaf0a7d8644f0b4bdc986a6f86546fyfgh47a",
+            "startDate": "09.08.2024",
+            "endDate": "09.08.2024",
+            "status": "ACTIVE"
+        }
+    ]
+}

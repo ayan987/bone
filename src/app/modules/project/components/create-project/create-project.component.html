@@ -1,0 +1,217 @@
+<div class="flex flex-row justify-between px-6 py-3 bg-grey-200">
+  <div class="font-bold text-xl text-grey-600">{{ data === null ? 'Create Project' : 'Edit Project' }}</div>
+  <div class="cursor-pointer flex items-center" (click)="closeDialog()">
+    <mat-icon>close</mat-icon>
+  </div>
+</div>
+
+<form [formGroup]="form">
+  <div class="py-6 px-6 h-[555px] overflow-auto">
+    <!--Project Name-->
+    <div class="flex flex-start gap-3">
+      <div class="text-base mb-2 font-medium">Project Name <sup>*</sup></div>
+    </div>
+    <mat-form-field class="w-full mb-3 custom-form-field" appearance="outline">
+      <input
+        id="txtProjectName"
+        matInput
+        type="text"
+        #projectName
+        placeholder="Enter a project name"
+        formControlName="projectName"
+      />
+      <mat-hint
+        align="start"
+        [ngClass]="projectName.value.length > 100 || projectName.value.length < 2 ? 'text-red-500' : ''"
+        >Min. 2, Max. 100 characters</mat-hint
+      >
+      <mat-hint align="end" [ngClass]="projectName.value.length > 100 || projectName.value.length < 2 ? 'text-red-500' : ''">
+        {{ projectName.value.length }} / 100</mat-hint>
+      <mat-error
+        *ngIf="
+          this.form.get('projectName')?.touched &&
+          this.form.get('projectName')?.hasError('required')
+        "
+      >
+        Project Name is required</mat-error
+      >
+      <mat-error
+        *ngIf="
+          this.form.get('projectName')?.touched &&
+          this.form.get('projectName')?.hasError('pattern')
+        "
+      >
+      Invalid Characters</mat-error
+      >
+      <mat-error
+        *ngIf="
+          this.form.get('projectName')?.hasError('duplicateProject')
+        "
+      >
+      Project already exists.</mat-error
+      >
+    </mat-form-field>
+
+    <!--Project Description-->
+    <div class="flex flex-start gap-3">
+      <div class="text-base mb-2 font-medium">Project Description</div>
+    </div>
+    <mat-form-field appearance="outline" class="w-full">
+      <textarea
+        id="txtDescription"
+        matInput
+        class="text-area"
+        formControlName="projectDescription"
+        placeholder="Enter a project description"
+        #projectDescription
+      ></textarea>
+      <mat-hint align="end">{{ projectDescription.value.length }} Characters</mat-hint>
+      <!-- <mat-hint align="start" [ngClass]="projectDescription.value.length > 1000 ? 'text-red-500' : ''" class="text-grey-600">Max. 100 characters</mat-hint> -->
+      <mat-error
+        class="error-message"
+        *ngIf="
+          this.form.get('projectDescription')?.touched &&
+          this.form.get('projectDescription')?.hasError('pattern')
+        "
+      >
+      Invalid Characters</mat-error
+      >
+    </mat-form-field>
+
+    <div class="flex justify-between gap-3 mb-3">
+      <div class="w-[50%]">
+        <!--Location-->
+        <div class="flex flex-start">
+          <div class="text-base mb-2 font-medium">Project Location <sup>*</sup></div>
+        </div>
+        <mat-form-field appearance="outline" class="w-full custom-form-field">
+        <mat-select formControlName="projectLocation" id="setProjectLocation" placeholder="Select a location">
+          <mat-option *ngFor="let projectLocation of locationOptions" [value]="projectLocation">
+            {{ projectLocation.cityName }} ({{ projectLocation.countryCode }})
+          </mat-option>
+          </mat-select>
+          <mat-error
+            *ngIf="
+              this.form.get('projectLocation')?.touched &&
+              this.form.get('projectLocation')?.hasError('required')
+            ">
+            Project Location is required</mat-error>
+        </mat-form-field>
+      </div>
+      <div class="w-[50%]">
+        <!--Project Status-->
+        <div class="flex flex-start gap-3">
+          <div class="text-base mb-2 font-medium">Status</div>
+        </div>
+        <mat-form-field appearance="outline" class="w-full custom-form-field">
+          <mat-select formControlName="status" id="setStatus">
+            <mat-option value="DRAFT">Draft</mat-option>
+            <mat-option value="ACTIVE" [disabled]="data === null">Active</mat-option>
+          </mat-select>
+        </mat-form-field>
+      </div>
+    </div>
+
+    <!--End Client-->
+    <!-- <div class="flex flex-start gap-3">
+      <div class="text-base mb-2 font-medium">End Client <sup>*</sup></div>
+    </div>
+    <mat-form-field appearance="outline" class="w-[1/2] custom-form-field">
+      <mat-select formControlName="endClients" placeholder="Select End Client">
+      <mat-option *ngFor="let endClient of endClientList" [value]="endClient">
+        {{ endClient.name }}
+      </mat-option>
+      </mat-select>
+      <mat-error
+        *ngIf="
+          this.form.get('endClients')?.touched &&
+          this.form.get('endClients')?.hasError('required')
+        "
+      >
+        End Client is required</mat-error
+      >
+    </mat-form-field> -->
+    <!-- End Client dropdown (updated binding) -->
+
+    <div class="flex justify-between gap-3 mb-3">
+      <div class="w-[50%]">
+        <div class="flex flex-start gap-3">
+          <div class="text-base mb-2 font-medium">End Client <sup>*</sup></div>
+        </div>
+        <mat-form-field appearance="outline" class="w-full custom-form-field">
+          <mat-select formControlName="endClientId" placeholder="Select End Client">
+            <mat-option *ngFor="let ec of endClientList" [value]="ec.id">
+              {{ ec.endClientName }}
+            </mat-option>
+          </mat-select>
+          <mat-error *ngIf="form.get('endClientId')?.hasError('required')">
+            End Client is required
+          </mat-error>
+        </mat-form-field>
+      </div>
+
+      <!-- New Responsible Person dropdown -->
+      <div class="w-[50%]">
+        <div class="flex flex-start gap-3">
+          <div class="text-base mb-2 font-medium">Responsible Person <sup>*</sup></div>
+        </div>
+        <mat-form-field appearance="outline" class="w-full custom-form-field">
+          <mat-select formControlName="responsiblePerson" [compareWith]="comparePRP" placeholder="Select Person">
+            <mat-option *ngFor="let p of availablePersons" [value]="p">
+              {{ p.firstName }} {{ p.lastName }}
+            </mat-option>
+          </mat-select>
+          <mat-error *ngIf="form.get('responsiblePerson')?.hasError('required')">
+            Responsible Person is required
+          </mat-error>
+        </mat-form-field>
+      </div>
+
+    </div>
+
+    <div *ngIf="showEndClientMessage" class="flex flex-row items-center mt-[-19px]">
+      <span class="material-symbols-outlined !text-[18px]"> info </span>
+      <span class="text-grey-600 italic !text-[10px] font-bold pl-2">(To edit remove all existing Abrufs and POs)</span>
+    </div>
+
+    <!--Abruf Required-->
+    <div class="flex flex-col ml-0.5">
+      <mat-checkbox color="primary" formControlName="abrufRequired" class="!ml-[-10px]">Abruf Required for this project</mat-checkbox>
+      <div *ngIf="showAbrufMessage" class="flex flex-row items-center">
+        <span class="material-symbols-outlined !text-[18px]"> info </span>
+        <span class="text-grey-600 italic !text-[10px] font-bold pl-2">(To uncheck, please remove all existing Abrufs associated with this project)</span>
+      </div>
+      <div *ngIf="showPoMessage && !showAbrufMessage" class="flex flex-row items-center">
+        <span class="material-symbols-outlined !text-[18px]"> info </span>
+        <span class="text-grey-600 italic !text-[10px] font-bold pl-2">(To check, please remove all existing POs with No abruf)</span>
+      </div>
+    </div>
+
+  </div>
+
+  <hr class="border-grey-300 mb-4" />
+
+  <div class="button flex justify-end px-6 gap-3">
+    <button
+      id="btnCancel"
+      type="button"
+      mat-stroked-button
+      class="mat-cancel !rounded-[50px]"
+      (click)="closeDialog()"
+    >
+      Cancel
+    </button>
+    <button
+      id="btnSave"
+      type="submit"
+      mat-raised-button
+      class="mat-create !rounded-[50px]"
+      [disabled]="!form.valid || isSaving"
+      (click)="saveProject()"
+    >
+      Save
+    </button>
+  </div>
+</form>
+
+<app-upload-progress-overlay *ngIf="isSaving"></app-upload-progress-overlay>

@@ -1,0 +1,121 @@
+<div class="flex flex-row justify-between px-6 py-3 bg-grey-200">
+  <div class="font-bold text-xl text-grey-600"><span *ngIf="consultantEditObject?.flag">Edit</span> Assign<span *ngIf="consultantEditObject?.flag">ed</span> Consultant(s)</div>
+  <div class="cursor-pointer flex items-center" (click)="closeDialog(false)">
+    <mat-icon>close</mat-icon>
+  </div>
+</div>
+
+<form [formGroup]="assignConsultantForm">
+  <div class="py-6 px-6">
+    <div class="text-base text-grey-600  pb-3"><span class="font-bold">Po No:</span> {{data?.poNo}}</div>
+    <div class="text-base text-grey-600  pb-3"><span class="font-bold">PG Name:</span> {{data?.pgName}}</div>
+    <div class="text-base text-grey-600  pb-3">
+        <span class="font-bold">PO Start - End Date: </span> <span>{{data?.poStartDate | customDateFormat}} - {{data?.poEndDate | customDateFormat}}</span>
+    </div>
+    <div class="text-sm text-red-600 pb-3 italic" *ngIf="!consultantEditObject?.flag && (data?.poTimesheetTemplate?.templateName === null || data?.poTimesheetTemplate?.timesheetHeaderData === null)">
+      {{noTimesheetTemplateText}}({{data?.poNo}})
+    </div>
+    <div formArrayName="consultantsArray" class="overflow-auto h-[380px] pr-1">
+      <div *ngFor="let consultant of consultantsArray?.controls; let i = index"
+          class="p-5 pb-0 rounded-lg mb-4 last:mb-0 bg-card-back">
+          <div [formGroupName]="i">
+              <div class="flex flex-row justify-between items-center gap-8 mb-5 font-bold border-b-2 border-grey-300 pb-2">
+                  <div *ngIf="consultantEditObject" class="flex flex-row w-full items-center " [ngClass]="!consultantEditObject.flag ? 'gap-48' : 'gap-60'">
+                    <div class="flex flex-row gap-7">
+                      <mat-icon *ngIf="!consultantEditObject.flag" class="material-symbols-outlined !text-[18px] text-center ml-[0.4rem]" [matTooltip]="(this.data?.poTimesheetTemplate?.templateName === null || this.data?.poTimesheetTemplate?.timesheetHeaderData === null) ? noTimesheetTemplateText : consultant.get('generateTs')?.disabled ? disableText : enableText"> info </mat-icon>
+                      <div class="">Select Consultant {{i + 1 }}<sup class="!font-normal">*</sup></div>
+                    </div>
+                    <div class="flex flex-row gap-28">
+                      <div class="">Effective Start Date <sup class="!font-normal">*</sup></div>
+                      <div class="">Effective End Date</div>
+                    </div>
+                  </div>
+                  <mat-icon *ngIf="consultantsArray.length > 1" matTooltip="Remove Consultant {{i+1}}" class="delete-icon" (click)="removeConsultant(i)">delete_forever</mat-icon>
+              </div>
+              <div class="flex flex-row gap-4">
+                <mat-checkbox *ngIf="consultant.get('generateTs') && !consultantEditObject?.flag" formControlName="generateTs"></mat-checkbox>
+                <div class="w-4/5">
+                  <mat-form-field class="w-full mb-3 custom-form-field">
+                    <mat-select formControlName="id" id="consultantName" placeholder="Select a consultant" #singleSelect>
+                      <mat-select-trigger>
+                        {{ singleSelect.value?.firstName }} {{ singleSelect.value?.lastName }}
+                      </mat-select-trigger>
+                      <mat-option>
+                        <ngx-mat-select-search [formControl]="consultantFilterCtrl" placeholderLabel="search..." noEntriesFoundLabel="No matching Consultant found..." tabindex="-1"></ngx-mat-select-search>
+                      </mat-option>
+                      <mat-option *ngFor="let consultant of consultantList | async" [value]="consultant">
+                        {{ consultant.firstName }} {{ consultant.lastName}}
+                        <div class="text-grey-600 italic !text-[12px]"> {{ consultant.email }}</div>
+                      </mat-option>
+                    </mat-select>
+                    <mat-error *ngIf="consultant.get('id')?.hasError('duplicate')">The Consultant is already selected</mat-error>
+                    <mat-error *ngIf="consultant.get('id')?.touched && consultant.get('id')?.hasError('required')"> This is required</mat-error>
+                    <mat-error *ngIf="consultant.get('id')?.hasError('sameTimePeriod')">
+                      Consultant cannot be assigned in the same time period
+                    </mat-error>
+                    <mat-error *ngIf="consultant.get('id')?.hasError('reassigningConsultant')">
+                      consultant is already assigned to PG without an end date
+                    </mat-error>
+                  </mat-form-field>
+                </div>
+                <div>
+                  <mat-form-field class="w-full custom-form-field date-picker2" appearance="outline">
+                    <input matInput [matDatepicker]="startDate" [min]="minDate" [max]="maxDate" placeholder="DD.MM.YYYY" formControlName="startDate" id="startDate" (dateInput)="validateDate(i)" restrictDate>
+                    <mat-datepicker-toggle matIconSuffix [for]="startDate"></mat-datepicker-toggle>
+                    <mat-datepicker #startDate></mat-datepicker>
+                    <mat-error *ngIf="consultant.get('startDate')?.hasError('required') && !consultant.get('startDate')?.hasError('matDatepickerParse')">This field is required</mat-error>
+                    <mat-error *ngIf="consultant.get('startDate')?.hasError('matDatepickerParse')">
+                      Please input date in correct format (DD.MM.YYYY)
+                    </mat-error>
+                    <mat-error *ngIf="consultant.get('startDate')?.hasError('poStartDateError') && !consultant.get('startDate')?.hasError('required') && !consultant.get('startDate')?.hasError('invalid')">
+                      Date is earlier than the PO start date
+                    </mat-error>
+                  </mat-form-field>
+                </div>
+                <div>
+                  <mat-form-field class="w-full custom-form-field date-picker2" appearance="outline">
+                    <input matInput [matDatepicker]="endDate" [min]="minDate" [max]="maxDate" placeholder="DD.MM.YYYY" formControlName="endDate" id="endDate" (dateInput)="validateDate(i)" restrictDate>
+                    <mat-datepicker-toggle matIconSuffix [for]="endDate"></mat-datepicker-toggle>
+                    <mat-datepicker #endDate></mat-datepicker>
+                    <mat-error *ngIf="consultant.get('endDate')?.invalid && consultant.get('endDate')?.touched && !consultant.get('endDate')?.hasError('poEndDateError') && !assignConsultantForm.hasError('endDateBeforeStartDate')">Please input date in correct format (DD.MM.YYYY)</mat-error>
+                    <mat-error *ngIf="assignConsultantForm.hasError('endDateBeforeStartDate') && consultant.get('startDate')?.touched && consultant.get('endDate')?.dirty">Error: End Date < Start Date</mat-error>
+                    <mat-error *ngIf="consultant.get('endDate')?.hasError('poEndDateError') && consultant.get('endDate')?.touched">Date is later than the PO end date</mat-error>
+                  </mat-form-field>
+                </div>
+              </div>
+              <div *ngIf="!consultantEditObject?.flag && i === (consultantsArray.length -1)" class="flex flex-row justify-end pb-2" id="btnAddClient">
+                <div class="flex items-center" [ngClass]="isConsultantFormValid || consultantsArray.length < 1 ? 'text-blue cursor-pointer' : 'text-grey-400 cursor-default'" (click)="addConsultant()"><mat-icon>add</mat-icon>Assign New Consultant
+                </div>
+              </div>
+          </div>
+      </div>
+    </div>
+
+
+  </div>
+
+  <hr class="border-grey-300 mb-4" />
+
+  <div class="button flex justify-end px-6 gap-3">
+    <button
+      id="btnCancel"
+      type="button"
+      mat-stroked-button
+      class="mat-cancel !rounded-[50px]"
+      (click)="closeDialog(false)"
+    >
+      Cancel
+    </button>
+    <button
+      id="btnSave"
+      type="submit"
+      mat-raised-button
+      class="mat-create !rounded-[50px]"
+      [disabled]="assignConsultantForm.invalid || isassigningConsultant"
+      (click)="assignConsultants()"
+    >
+      Save
+    </button>
+  </div>
+</form>
+<app-upload-progress-overlay *ngIf="isassigningConsultant"></app-upload-progress-overlay>

@@ -1,0 +1,117 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+@import "../src/styles/material.scss";
+
+
+ /* Proxima Nova Font */
+@font-face {
+  font-family: Inter;
+  src: url(assets/fonts/Inter/Inter-Regular.ttf) format('truetype');
+	font-weight: normal;
+	font-style: normal;
+}
+
+html,
+body {
+  height: 100%;
+}
+body,
+h1,
+h2,
+button,
+div,
+table,
+th,
+td {
+  margin: 0;
+  /* font-family: "DM Sans", sans-serif !important; */
+  font-family: "Inter" !important;
+}
+
+sup {
+  color: red;
+  font-size: 17px;
+}
+
+.mat-mdc-form-field-icon-prefix>.mat-icon {
+  padding: 1px 2px 0px 8px !important;
+  color: #8f8f8f;
+  font-size: 18px;
+  margin-top: -10px;
+  margin-right: -6px;
+}
+
+
+/* //Scroll bar design
+// / width / */
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+/* // / Track / */
+::-webkit-scrollbar-track {
+  box-shadow: inset 0 0 5px white;
+  border-radius: 6px;
+}
+
+/* // / Handle / */
+::-webkit-scrollbar-thumb {
+  /* background: #e1e1e1; */
+  background: #9b9b9b;
+  border-radius: 10px;
+}
+
+/* // / Handle on hover / */
+::-webkit-scrollbar-thumb:hover {
+  /* background: #e1e1e1; */
+  background: #9b9b9b;
+}
+/* //Scroll bar design ends */
+
+.no-data-row {
+  height: 100px;
+  align-items: center;
+  font-size: 20px;
+  color: black;
+  opacity: 0.8;
+}
+
+.delete-icon {
+  color: #F41212;
+  cursor: pointer;
+}
+
+.create-button {
+  border-radius: 10px !important;
+}
+
+.profile-picture {
+  width: 35px;
+  height: 35px;
+  margin: 0 6px;
+}
+.profile-picture img {
+    width: 100%;
+    border-radius: 50%;
+}
+.no-profile {
+  width: 40px !important;
+  height: 40px !important;
+  font-size: 40px;
+}
+
+.no-profile-comment {
+  width: 35px !important;
+  height: 35px !important;
+  font-size: 35px;
+}
+
+.person-name {
+  font-weight: 600;
+}
+
+.person-email {
+  font-size: 0.9rem;
+  color: rgba(0,0,0,0.6);
+}

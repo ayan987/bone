@@ -1,0 +1,428 @@
+<mat-drawer-container [hasBackdrop]="true" class="h-[calc(100vh-160px)] overflow-auto" [ngClass]="!isGeneratedView ? 'h-max' : ''">
+  <mat-drawer #sideBar mode="over" position="end" class="!bg-sidebar-background">
+    <app-view-timesheet [timesheetData]="timesheetRowData" (closeNavBar)="closeNavBar($event)"></app-view-timesheet>
+  </mat-drawer>
+  <mat-drawer-content >
+    <mat-card class="mx-6 h-full overflow-auto" [ngClass]="isUnmatchedView ? '!mx-0 !overflow-x-hidden' : ''" scrollTracker (scrollingFinished)="onScrollingDataLoad()">
+      <mat-card-content class="!p-0">
+        <div
+          class="flex !items-center !bg-sidebar-background !justify-between rounded-t-lg sticky z-[200] top-0 p-4"
+        >
+          <div class="text-xl font-semibold text-grey-600">{{tableHead}}</div>
+          <div *ngIf="(!isGeneratedView && !isUnmatchedView)" class="flex justify-start gap-4 items-center">
+            <div *ngIf="selection.selected.length > 0" class="text-grey-600">{{selection.selected.length}} / {{dataSource.length}} consultant entries selected</div>
+            <button
+              class="create-button"
+              mat-raised-button
+              color="create"
+              (click)="openGenerationConfirmation()"
+              [disabled]="selection.selected.length === 0"
+            >
+              <div class="flex items-center">
+                <mat-icon class="mr-1 -ml-2">add</mat-icon>
+                Generate Timesheet
+              </div>
+            </button>
+          </div>
+          <div *ngIf="isGeneratedView" class="flex justify-start gap-4 items-center">
+            <div *ngIf="selection.selected.length > 0" class="text-grey-600">{{selection.selected.length}} / {{dataSource.length}} timesheet selected</div>
+
+            <!-- Action dropdown for generated view -->
+            <ng-container>
+              <div class="w-[190px]">
+                <!-- <mat-label>Actions</mat-label> -->
+                <mat-form-field class="w-full custom-filter-field mt-4" appearance="outline">
+                  <mat-select [(value)]="actionItemSelected" placeholder="Action items" [disabled]="selection.selected.length === 0">
+                    <!-- <mat-option value="download">
+                      <mat-icon>download</mat-icon> Download
+                    </mat-option>
+                    <mat-option value="archive">
+                      <mat-icon>archive</mat-icon> Archive
+                    </mat-option> -->
+                    <mat-option value="sendEmail" (click)="sendEmail()">
+                      <mat-icon>email</mat-icon>
+                      Send Email
+                    </mat-option>
+                    <mat-option value="regenerate" (click)="openRegenerationConfirmation()">
+                      <mat-icon>autorenew</mat-icon>
+                      Regenerate
+                    </mat-option>
+                  </mat-select>
+                </mat-form-field>
+              </div>
+            </ng-container>
+          </div>
+        </div>
+        <div class="timesheet-table mt-4">
+          <table mat-table [dataSource]="dataSource" class="table-container">
+
+              <!-- radio Column -->
+              <ng-container matColumnDef="selectUnmatched">
+                  <th mat-header-cell *matHeaderCellDef>
+                  </th>
+                  <td mat-cell *matCellDef="let row">
+                    <mat-icon
+                      class="material-symbols-outlined text-green cursor-pointer"
+                      matTooltip="Match Timesheet"
+                      (click)="
+                        matchTimesheet(row)
+                      "
+                    >
+                      conversion_path
+                    </mat-icon>
+                    <!-- <mat-radio-button
+                      [value]="row"
+                      [checked]="selectedRow === row"
+                      (change)="onRadioChange(row)"
+                      color="primary"
+                      >
+                    </mat-radio-button> -->
+                  </td>
+              </ng-container>
+
+              <!-- Checkbox Column -->
+              <ng-container matColumnDef="select">
+                  <th mat-header-cell *matHeaderCellDef>
+                  <!-- <mat-checkbox
+                      color="primary"
+                      (change)="$event ? masterToggle() : null"
+                      [checked]="selection.hasValue() && isAllSelected()"
+                      [indeterminate]="selection.hasValue() && !isAllSelected()"
+                      [aria-label]="checkboxLabel()">
+                  </mat-checkbox> -->
+                  </th>
+                  <td mat-cell *matCellDef="let row">
+                  <mat-checkbox
+                      color="primary"
+                      (click)="$event.stopPropagation()"
+                      (change)="$event ? selection.toggle(row) : null"
+                      [checked]="selection.isSelected(row)"
+                      [aria-label]="checkboxLabel(row)"
+                      [disabled]="(row.poTimesheetTemplateId === null && row.poTimesheetTemplateName === null) || (row?.statuses?.statusKey === started || row?.statuses?.statusKey === genqueued || row?.statuses?.statusKey === emailqueued)">
+                  </mat-checkbox>
+                  </td>
+              </ng-container>
+
+              <!-- Client Column -->
+              <ng-container matColumnDef="client">
+                <th mat-header-cell *matHeaderCellDef>
+                  <div>
+                    Client
+                  </div>
+                  <mat-form-field class="w-full custom-filter-field mt-2" appearance="outline">
+                    <mat-select [formControl]="clientFilterCtrl" multiple placeholder="Select client" class="custom-placeholder" panelClass="custom-select-panel" (selectionChange)="applyFilters()" #clientSelection>
+                      <mat-option>
+                        <ngx-mat-select-search [formControl]="clientMultiFilterCtrl" placeholderLabel="Search clients..." noEntriesFoundLabel="'No clients found'"></ngx-mat-select-search>
+                      </mat-option>
+                      <mat-option *ngFor="let client of filteredClients | async" [value]="client.id">
+                        {{ client.shortName }}
+                      </mat-option>
+                    </mat-select>
+                  </mat-form-field>
+                </th>
+                <td mat-cell *matCellDef="let element">{{ element.clientShortName }}</td>
+              </ng-container>
+
+              <!-- Project Column -->
+              <ng-container matColumnDef="project">
+                <th mat-header-cell *matHeaderCellDef>
+                  <div>
+                    Project
+                  </div>
+                  <mat-form-field class="w-full custom-filter-field mt-2" appearance="outline">
+                    <mat-select [formControl]="projectFilterCtrl" multiple placeholder="Select project" class="custom-placeholder" panelClass="custom-select-panel" (selectionChange)="applyFilters()" #projectSelection>
+                      <mat-option>
+                        <ngx-mat-select-search [formControl]="projectMultiFilterCtrl" placeholderLabel="Search projects..." noEntriesFoundLabel="'No projects found'"></ngx-mat-select-search>
+                      </mat-option>
+                      <mat-option *ngFor="let project of filteredProjects | async" [value]="project.id">
+                        {{ project.projectName }}
+                      </mat-option>
+                    </mat-select>
+                  </mat-form-field>
+                </th>
+                <td mat-cell *matCellDef="let element">{{ element.projectName }}</td>
+              </ng-container>
+
+              <!-- Abruf Column -->
+              <ng-container matColumnDef="abruf">
+                <th mat-header-cell *matHeaderCellDef>
+                  <div>
+                    Abruf Number (Start - End)
+                  </div>
+                  <mat-form-field
+                    appearance="outline"
+                    class="custom-filter-field custom-input-placeholder w-full mt-2"
+                  >
+                    <input
+                      matInput
+                      placeholder="Enter abruf no"
+                      [formControl]="abrufSearchCtrl"
+                    />
+                    <mat-icon matPrefix class="-mt-1.5 text-gray-500">search</mat-icon>
+                    <button
+                      class="-mt-1.5 cancel-icon"
+                      *ngIf="abrufSearchCtrl.value"
+                      mat-icon-button
+                      matSuffix
+                      (click)="clearSearch('abruf')"
+                      matTooltip="Clear search"
+                    >
+                      <mat-icon>cancel</mat-icon>
+                    </button>
+                  </mat-form-field>
+                </th>
+                <td mat-cell *matCellDef="let element">
+                  <div class="overflow-hidden text-ellipsis whitespace-nowrap" matTooltip="{{element.abrufName}}" [applyCopyToClipboard]="element.abrufName" [innerHTML]=" element.abrufNo | textHighlight: abrufSearchCtrl.value">
+                    {{ element.abrufNo }}
+                  </div>
+                  <div class="text-table-cell text-xs">{{ element.abrufStartDate | customDateFormat }} - {{ element.abrufEndDate | customDateFormat }}</div>
+                </td>
+              </ng-container>
+
+              <!-- Consultant Column -->
+              <ng-container matColumnDef="consultant">
+              <th mat-header-cell *matHeaderCellDef>
+                <div>
+                  Consultant (Start - End)
+                </div>
+                <mat-form-field
+                  appearance="outline"
+                  class="custom-filter-field custom-input-placeholder w-full mt-2"
+                >
+                  <input
+                    matInput
+                    placeholder="Enter consultant name"
+                    [formControl]="consultantSearchCtrl"
+                  />
+                  <mat-icon matPrefix class="-mt-1.5 text-gray-500">search</mat-icon>
+                  <button
+                    class="-mt-1.5 cancel-icon"
+                    *ngIf="consultantSearchCtrl.value"
+                    mat-icon-button
+                    matSuffix
+                    (click)="clearSearch('consultant')"
+                    matTooltip="Clear search"
+                  >
+                    <mat-icon>cancel</mat-icon>
+                  </button>
+                </mat-form-field>
+              </th>
+              <td mat-cell *matCellDef="let element">
+                <div class="text-black" [innerHTML]=" (element.firstName + ' ' + element.lastName) | textHighlight: consultantSearchCtrl.value">
+                  <!-- {{element.firstName}} {{element.lastName}} -->
+                </div>
+                <div class="text-table-cell text-xs">{{element.pgConsultantStartDate | customDateFormat }} - {{element.pgConsultantEndDate | customDateFormat }}</div>
+              </td>
+              </ng-container>
+
+              <!-- PO Number Column -->
+              <ng-container matColumnDef="poNumber">
+              <th mat-header-cell *matHeaderCellDef>
+                <div>
+                  PO Number (Start - End)
+                </div>
+                <mat-form-field
+                  appearance="outline"
+                  class="custom-filter-field custom-input-placeholder w-full mt-2"
+                >
+                  <input
+                    matInput
+                    placeholder="Enter po number"
+                    [formControl]="poSearchCtrl"
+                  />
+                  <mat-icon matPrefix class="-mt-1.5 text-gray-500">search</mat-icon>
+                  <button
+                    class="-mt-1.5 cancel-icon"
+                    *ngIf="poSearchCtrl.value"
+                    mat-icon-button
+                    matSuffix
+                    (click)="clearSearch('po')"
+                    matTooltip="Clear search"
+                  >
+                    <mat-icon>cancel</mat-icon>
+                  </button>
+                </mat-form-field>
+              </th>
+              <td mat-cell *matCellDef="let element">
+                <div class="flex justify-between">
+                  <div>
+                    <div [innerHTML]=" element.poNo | textHighlight: poSearchCtrl.value">
+                      <!-- {{element.poNo}} -->
+                    </div>
+                    <div class="text-table-cell text-xs">{{element.poStartDate | customDateFormat }} - {{element.poEndDate | customDateFormat }}</div>
+                  </div>
+                  <div class="mr-8" *ngIf="element.poTimesheetTemplateId === null && element.poTimesheetTemplateName === null">
+                    <span class="material-symbols-outlined text-warning" [matTooltip]=noTemplateText>warning</span>
+                  </div>
+                </div>
+              </td>
+              </ng-container>
+
+              <!-- Price Group Column -->
+              <ng-container matColumnDef="priceGroup">
+              <th mat-header-cell *matHeaderCellDef>
+                <div>
+                  Price Group
+                </div>
+                <mat-form-field
+                  appearance="outline"
+                  class="custom-filter-field custom-input-placeholder w-full mt-2"
+                >
+                  <input
+                    matInput
+                    placeholder="Enter pg name"
+                    [formControl]="pgSearchCtrl"
+                  />
+                  <mat-icon matPrefix class="-mt-1.5 text-gray-500">search</mat-icon>
+                  <button
+                    class="-mt-1.5 cancel-icon"
+                    *ngIf="pgSearchCtrl.value"
+                    mat-icon-button
+                    matSuffix
+                    (click)="clearSearch('pg')"
+                    matTooltip="Clear search"
+                  >
+                    <mat-icon>cancel</mat-icon>
+                  </button>
+                </mat-form-field>
+              </th>
+              <td mat-cell *matCellDef="let element" [innerHTML]=" element.pgName | textHighlight: pgSearchCtrl.value">{{element.pgName}}</td>
+              </ng-container>
+
+              <!-- Timesheet status Column -->
+              <ng-container matColumnDef="status">
+                <th mat-header-cell *matHeaderCellDef>
+                  <div>Timesheet Status</div>
+                  <mat-form-field class="w-full custom-filter-field mt-2" appearance="outline">
+                    <mat-select [formControl]="statusFilterCtrl" multiple placeholder="Select status" (selectionChange)="applyFilters()" class="custom-placeholder" panelClass="custom-select-panel" #statusSelection>
+                      <mat-option>
+                        <ngx-mat-select-search [formControl]="statusMultiFilterCtrl" placeholderLabel="Search status..." noEntriesFoundLabel="'No status found'"></ngx-mat-select-search>
+                      </mat-option>
+                      <mat-option *ngFor="let status of filteredStatuses | async" [value]="status">
+                        {{ status?.statusGoodName }}
+                      </mat-option>
+                    </mat-select>
+                  </mat-form-field>
+                </th>
+                <td mat-cell *matCellDef="let element">
+                  <div class="flex justify-start items-center gap-5">
+                    <div [ngClass]="element?.statuses?.statusKey === imported && (element?.statuses | importwarningCount) > 0 ? 'text-warning' : element?.statuses?.statusKey | statusToColor">
+                      {{element?.statuses?.statusGoodName}}
+                    </div>
+                    <div class="mr-8" *ngIf="element?.statuses?.statusKey === imported && (element?.statuses | importwarningCount) > 0">
+                      <span class="material-symbols-outlined text-warning" matTooltip="Warnings: {{element?.statuses | importwarningCount}}">warning</span>
+                    </div>
+                    <mat-spinner *ngIf="element?.statuses?.statusKey === started" diameter="20"></mat-spinner>
+                  </div>
+                </td>
+              </ng-container>
+
+              <!--OLD STATUES CAN BE REMOVED-->
+              <!-- Timesheet Status Column -->
+              <!-- <ng-container matColumnDef="timesheetStatus">
+              <th mat-header-cell *matHeaderCellDef>
+                <div>Status</div>
+                <mat-form-field class="w-full custom-filter-field mt-2" appearance="outline">
+                  <mat-select [formControl]="statusFilterCtrl" multiple placeholder="Select status" (selectionChange)="applyFilters()" class="custom-placeholder" panelClass="custom-select-panel" #statusSelection>
+                    <mat-option>
+                      <ngx-mat-select-search [formControl]="statusMultiFilterCtrl" placeholderLabel="Search status..." noEntriesFoundLabel="'No status found'"></ngx-mat-select-search>
+                    </mat-option>
+                    <mat-option *ngFor="let status of filteredStatuses | async" [value]="status">
+                      {{ status }}
+                    </mat-option>
+                  </mat-select>
+                </mat-form-field>
+              </th>
+              <td mat-cell *matCellDef="let element">
+                <div class="flex justify-start gap-3">
+                  <div [ngClass]="{'text-red-600': element.generationStatus === error,
+                   'text-pending' : element.generationStatus === genqueued, 'text-green' : element.generationStatus === generated }">
+                   {{element.generationStatus}}
+                  </div>
+                  <mat-spinner *ngIf="element.generationStatus === started" diameter="20"></mat-spinner>
+                </div>
+              </td>
+              </ng-container> -->
+
+              <!-- Email Status Column -->
+              <!-- <ng-container matColumnDef="emailStatus">
+                <th mat-header-cell *matHeaderCellDef>
+                  <div>Email Status</div>
+                  <mat-form-field class="w-full custom-filter-field mt-2" appearance="outline">
+                    <mat-select [formControl]="emailStatusFilterCtrl" multiple placeholder="Select status" (selectionChange)="applyFilters()" class="custom-placeholder" panelClass="custom-select-panel" #emailStatusSelection>
+                      <mat-option>
+                        <ngx-mat-select-search [formControl]="emailStatusMultiFilterCtrl" placeholderLabel="Search status..." noEntriesFoundLabel="'No status found'"></ngx-mat-select-search>
+                      </mat-option>
+                      <mat-option *ngFor="let status of emailFilteredStatuses | async" [value]="status">
+                        {{ status }}
+                      </mat-option>
+                    </mat-select>
+                  </mat-form-field>
+                </th>
+                <td mat-cell *matCellDef="let element">
+                  <div class="flex justify-start gap-3">
+                    <div [ngClass]="{'text-red-600': element.emailGenerationStatus === error,
+                     'text-pending' : element.emailGenerationStatus === emailqueued, 'text-green' : element.emailGenerationStatus === sent }">
+                     {{element.emailGenerationStatus}}
+                    </div>
+                    <mat-spinner *ngIf="element.emailGenerationStatus === started" diameter="20"></mat-spinner>
+                  </div>
+                </td>
+                </ng-container> -->
+                <!--OLD STATUES CAN BE REMOVED-->
+
+              <!-- Month/Year Column -->
+              <ng-container matColumnDef="monthYear">
+                <th mat-header-cell *matHeaderCellDef>
+                  <div class="-mt-4">Month/Year</div>
+                  <div class="border rounded-lg p-1.5 mt-2 mb-3">
+                    <input type="month" id="start" name="start" min="2000-01" [value]="(!isGeneratedView && !isUnmatchedView) ? selectedMonthYear : ''" (change)="applyFilters()" />
+                  </div>
+                </th>
+                <td mat-cell *matCellDef="let element">
+                <div>
+                  @if (!isGeneratedView) {
+                    {{formatMonthYear(selectedMonth, selectedYear)}}
+                  } @else {
+                    {{formatMonthYear(element.month, element.year)}}
+                  }
+                </div>
+              </td>
+              </ng-container>
+
+              <!-- Hours Column -->
+              <ng-container matColumnDef="hours">
+              <th mat-header-cell *matHeaderCellDef>Hours</th>
+              <td mat-cell *matCellDef="let element">{{element.hours}}</td>
+              </ng-container>
+
+              <!-- Header and Row Definitions -->
+              <tr mat-header-row *matHeaderRowDef="displayedColumns; sticky: true" class="uppercase sticky-header" [ngClass]="tableHead === 'View Timesheets' ? '!top-[111px]' : ''"></tr>
+              <tr mat-row *matRowDef="let row; columns: displayedColumns;" (click)="viewTimesheetDetails(row, tableHead)" [ngClass]="tableHead === 'View Timesheets' ? 'cursor-pointer' : ''"></tr>
+
+              <tr class="mat-row" *matNoDataRow>
+                <td class="mat-cell" colspan="12">
+                  <div
+                    class="flex justify-center no-data-row italic !text-grey-600 !text-[1.1rem]"
+                  >
+                    {{ !isGeneratedView ? (isUnmatchedView ? 'No suggestions timesheets to view' : 'No active consultants to view') : 'No Timesheets to view' }}
+                  </div>
+                </td>
+              </tr>
+          </table>
+
+          <!-- Gradient Loader -->
+          <!-- <div class="skeleton-loader" *ngIf="isLoading">
+            <div class="skeleton-row" *ngFor="let i of [1, 2, 3, 4, 5]">
+              <div class="skeleton-cell" style="width: 20%;"></div>
+              <div class="skeleton-cell" style="width: 30%;"></div>
+              <div class="skeleton-cell" style="width: 50%;"></div>
+            </div>
+          </div> -->
+        </div>
+      </mat-card-content>
+  </mat-card>
+  </mat-drawer-content>
+</mat-drawer-container>
+
+<app-upload-progress-overlay *ngIf="isLoading"></app-upload-progress-overlay>

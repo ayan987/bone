@@ -1,0 +1,14 @@
+<div class="flex justify-end gap-2 pr-8 items-center" *ngIf="queuedCount > 0">
+    <div class="font-semibold text-xl text-gray-500">Generation in progress</div>
+    <mat-spinner diameter="20"></mat-spinner>
+    <div class="text-lg">{{queuedCount}} remaining</div>
+</div>
+<div class="flex justify-end gap-2 pr-8 items-center" *ngIf="emailQueueCount > 0">
+    <div class="font-semibold text-xl text-gray-500">Email generation in progress</div>
+    <mat-spinner diameter="20"></mat-spinner>
+    <div class="text-lg">{{emailQueueCount}} remaining</div>
+</div>
+<app-timesheet-overview [tableData]="dataSource" [isGeneratedView]="true" [tableHead]="tableHead"
+ (applyFiltersEvent)="applyNewFilterCriteria($event)" (loadMoreData)="loadMoreData($event)" (loadDataOnTimesheetDelete)="loadDataOnTimesheetDelete($event)"></app-timesheet-overview>
+
+<!-- <div class="flex items-center justify-center"><mat-spinner *ngIf="loadingMore" diameter="50"></mat-spinner></div> -->

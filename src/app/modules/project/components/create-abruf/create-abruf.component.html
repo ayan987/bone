@@ -1,0 +1,151 @@
+<div class="flex flex-row justify-between px-6 py-3 bg-grey-200">
+  <div class="font-bold text-xl text-grey-600">
+    {{projectClientData?.abrufId ? 'Edit Abruf' : 'Create Abruf'}}
+  </div>
+  <div class="cursor-pointer flex items-center" (click)="closeDialog(false)">
+    <mat-icon>close</mat-icon>
+  </div>
+</div>
+
+<form [formGroup]="createAbrufForm">
+  <div class="py-6 px-6 max-h-[499px] overflow-auto">
+    <!--Select Project-->
+    <div class="flex flex-start gap-3">
+      <div class="text-base mb-2 font-medium">Select Project <sup>*</sup></div>
+    </div>
+    <mat-form-field class="w-full custom-form-field">
+      <mat-select [formControl]="projectCtrl" id="selProjectClient" placeholder="Select Project(client)" #singleSelect>
+        <mat-option>
+          <ngx-mat-select-search [formControl]="projectFilterCtrl" placeholderLabel="search..." noEntriesFoundLabel="No matching Project (client) found..."></ngx-mat-select-search>
+        </mat-option>
+
+        <mat-option *ngFor="let assigned of allProjectClients | async" [value]="assigned">
+          {{assigned?.projectName}} ({{assigned?.shortName}})
+        </mat-option>
+      </mat-select>
+      @if (projectCtrl.touched && projectCtrl.hasError('required')) {
+        <mat-error>This is required</mat-error>
+      }
+      <mat-hint align="end" class="italic" *ngIf="this.projectClientData?.endClients != null">{{this.projectClientData.endClients.name}}</mat-hint>
+      <mat-hint align="end" class="italic" *ngIf="this.projectClientData[2] != null">{{this.projectClientData[2].name}}</mat-hint>
+    </mat-form-field>
+
+    <div formArrayName="abrufs">
+      <div *ngFor="let abruf of abrufs.controls; let i = index">
+        <div [formGroupName]="i">
+          <!--Abruf Name-->
+        <div class="flex flex-start gap-3">
+          <div class="text-base mb-2 font-medium">Abruf Name <!--<sup>*</sup>--></div>
+        </div>
+        <mat-form-field class="w-full mb-3 custom-form-field" appearance="outline">
+          <input
+            id="txtAbrufName"
+            matInput
+            type="text"
+            #abrufNameText
+            placeholder="Enter an abruf name"
+            formControlName="abrufName"
+          />
+          <mat-hint align="start">Min. 2 , Max. 150 Characters</mat-hint>
+          <mat-hint align="end">{{ abrufNameText.value.length }} / 150</mat-hint>
+          <!-- <mat-hint align="start" [ngClass]="abrufNameText.value.length > 50 || abrufNameText.value.length < 2 ? 'text-red-500' : ''">Min. 2 , Max. 50 Characters</mat-hint>
+          <mat-hint align="end" [ngClass]="abrufNameText.value.length > 50 || abrufNameText.value.length < 2 ? 'text-red-500' : ''">{{ abrufNameText.value.length }} / 50</mat-hint> -->
+          <!-- @if (abruf.get('abrufName')?.touched && abruf.get('abrufName')?.hasError('required') ) {
+            <mat-error>Abruf Name is required</mat-error>
+          } -->
+          @if (abruf.get('abrufName')?.touched && abruf.get('abrufName')?.hasError('pattern') ) {
+            <mat-error>Invalid characters</mat-error>
+          }
+        </mat-form-field>
+
+        <!--Abruf Number-->
+        <div class="flex flex-start gap-3">
+          <div class="text-base mb-2 font-medium">Abruf Number <sup>*</sup></div>
+        </div>
+        <mat-form-field class="w-full mb-3 custom-form-field" appearance="outline">
+          <input
+            id="txtAbrufNumber"
+            matInput
+            type="text"
+            #abrufNumber
+            placeholder="Enter an abruf number"
+            formControlName="abrufNo"
+          />
+          <mat-hint align="end" [ngClass]="abrufNumber.value.length > 50 || abrufNumber.value.length < 10 ? 'text-red-500' : ''">{{ abrufNumber.value.length }} / 50</mat-hint>
+          <mat-hint align="start" [ngClass]="abrufNumber.value.length > 50 || abrufNumber.value.length < 10 ? 'text-red-500' : ''" class="text-grey-600">Min. 10, Max. 50 characters</mat-hint>
+          @if (abruf.get('abrufNo')?.touched && abruf.get('abrufNo')?.hasError('required')) {
+            <mat-error>Abruf Number is required</mat-error>
+          }
+          @if (abruf.get('abrufNo')?.touched && abruf.get('abrufNo')?.hasError('pattern')) {
+            <mat-error>Invalid characters</mat-error>
+          }
+          @if (abruf.get('abrufNo')?.hasError('duplicateAbrufNo')) {
+            <mat-error>Abruf No. already exits in the project client</mat-error>
+          }
+
+        </mat-form-field>
+
+        <!--Abruf Start Date End Date-->
+        <div class="flex flex-row justify-between gap-2 mb-2 w-full">
+          <div class="w-[48%]">
+            <div class="flex flex-star">
+              <div class="text-base mb-2 font-medium">Abruf Start Date</div>
+            </div>
+            <mat-form-field class="w-full custom-form-field date-picker" appearance="outline">
+              <input matInput [matDatepicker]="startDate" placeholder="DD.MM.YYYY" formControlName="startDate" id="txtAbrufStartDate" (dateInput)="validateDate()">
+              <mat-datepicker-toggle matIconPrefix [for]="startDate"></mat-datepicker-toggle>
+              <mat-datepicker #startDate></mat-datepicker>
+              @if (abruf.get('startDate')?.invalid && abruf.get('startDate')?.touched) {
+                <mat-error>Given Date is Invalid</mat-error>
+              }
+            </mat-form-field>
+          </div>
+          <div class="w-[48%]">
+            <div class="flex flex-start gap-3">
+              <div class="text-base mb-2 font-medium">Abruf End Date</div>
+            </div>
+            <mat-form-field class="w-full custom-form-field date-picker" appearance="outline">
+              <input matInput [matDatepicker]="endDate" placeholder="DD.MM.YYYY" formControlName="endDate" id="txtAbrufEnddate" (dateInput)="validateDate()">
+              <mat-datepicker-toggle matIconPrefix [for]="endDate"></mat-datepicker-toggle>
+              <mat-datepicker #endDate></mat-datepicker>
+              @if (abruf.get('endDate')?.invalid && abruf.get('endDate')?.touched && !createAbrufForm.hasError('endDateBeforeStartDate')) {
+                <mat-error>Given Date is Invalid</mat-error>
+              }
+              @if (createAbrufForm.hasError('endDateBeforeStartDate') && abruf.get('endDate')?.touched && abruf.get('endDate')?.dirty) {
+                <mat-error>Abruf End Date cannot be before Abruf Start Date</mat-error>
+              }
+            </mat-form-field>
+          </div>
+        </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <hr class="border-grey-300 mb-4" />
+
+  <div class="button flex justify-end px-6 gap-3">
+    <button
+      id="btnCancel"
+      type="button"
+      mat-stroked-button
+      class="mat-cancel !rounded-[50px]"
+      (click)="closeDialog(false)"
+    >
+      Cancel
+    </button>
+    <button
+      id="btnSave"
+      type="submit"
+      mat-raised-button
+      class="mat-create !rounded-[50px]"
+      [disabled]="!createAbrufForm.valid || isCreatingAbruf || (projectCtrl.value === null || projectCtrl.value === '')"
+      (click)="saveAbruf()"
+    >
+      Save
+    </button>
+  </div>
+</form>
+
+<app-upload-progress-overlay
+  *ngIf="isCreatingAbruf"
+></app-upload-progress-overlay>

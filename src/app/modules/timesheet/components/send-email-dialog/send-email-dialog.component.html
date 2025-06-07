@@ -1,0 +1,151 @@
+<!-- <h2 mat-dialog-title>Send Email</h2> -->
+<div class="flex items-center justify-between px-6 py-3 bg-grey-200">
+  <div class="font-bold text-xl text-grey-600">
+    Send Email
+  </div>
+  <div class="cursor-pointer flex items-center " (click)="closeDialog(false)">
+    <mat-icon>close</mat-icon>
+  </div>
+</div>
+<mat-dialog-content class="bg-dialog">
+  <mat-accordion multi>
+    <div class="expansion-panel-container mx-3">
+
+    <!-- Iterate over each client group -->
+    <mat-expansion-panel *ngFor="let group of groupedData" [expanded]="group.isExpanded">
+      <!-- Custom header using Tailwind CSS -->
+      <mat-expansion-panel-header (click)="toggleGroup(group)" class="custom-header" [ngClass]="{'bg-grey-100': group.isExpanded}">
+        <div class="flex justify-between items-center w-full p-2">
+          <!-- Left side: fixed width for client heading -->
+          <div class="flex items-center w-48">
+            <span class="font-bold text-lg">{{ group.clientShortName }}</span>
+          </div>
+          <div *ngIf="!group.isExpanded">{{group.selectedTemplate ? group.selectedTemplate.name : 'Select a template'}}</div>
+          <!-- Right side: fixed width for dropdown -->
+           <div class="flex items-center gap-3" *ngIf="group.isExpanded">
+            <div class="text-xl font-normal">Email template:</div>
+            <div class="w-64 mr-4">
+              <mat-form-field appearance="outline" class="w-full custom-filter-field mt-5" (click)="$event.stopPropagation()">
+                <mat-select
+                  placeholder="Select a template"
+                  [(value)]="group.selectedTemplate"
+                  (selectionChange)="onTemplateChange(group, $event.value)">
+                  <mat-option *ngFor="let template of templates" [value]="template">
+                    {{ template.name }}
+                  </mat-option>
+                </mat-select>
+              </mat-form-field>
+            </div>
+           </div>
+        </div>
+      </mat-expansion-panel-header>
+
+      <!-- Mat Table for the group items -->
+      <mat-table [dataSource]="group.items" class="table-container">
+        <!-- Consultant Column -->
+        <ng-container matColumnDef="consultant">
+          <mat-header-cell *matHeaderCellDef>Consultant</mat-header-cell>
+          <mat-cell *matCellDef="let element">
+            <div>
+              <div class="text-black">{{ element.firstName }} {{ element.lastName }}</div>
+              <div class="text-xs">
+                {{ element.pgConsultantStartDate | customDateFormat }} -
+                {{ element.pgConsultantEndDate | customDateFormat }}
+              </div>
+            </div>
+          </mat-cell>
+        </ng-container>
+
+        <!-- Email Column -->
+        <ng-container matColumnDef="email">
+          <mat-header-cell *matHeaderCellDef>Email</mat-header-cell>
+          <mat-cell *matCellDef="let element">
+            <div class="whitespace-normal break-words line-clamp-5 mt-1" matTooltip="{{element.email}}">{{ element.email }} </div>
+          </mat-cell>
+        </ng-container>
+
+        <!-- Project Name Column -->
+        <ng-container matColumnDef="projectName">
+          <mat-header-cell *matHeaderCellDef>Project Name</mat-header-cell>
+          <mat-cell *matCellDef="let element"> {{ element.projectName }} </mat-cell>
+        </ng-container>
+
+        <!-- PO Details Column -->
+        <ng-container matColumnDef="po">
+          <mat-header-cell *matHeaderCellDef>PO Details</mat-header-cell>
+          <mat-cell *matCellDef="let element">
+            <div>
+              <div>{{ element.poNo }}</div>
+              <div class="text-xs">
+                {{ element.poStartDate | customDateFormat }} -
+                {{ element.poEndDate | customDateFormat }}
+              </div>
+            </div>
+          </mat-cell>
+        </ng-container>
+
+        <!-- Price Group Column -->
+        <ng-container matColumnDef="pgName">
+          <mat-header-cell *matHeaderCellDef>Price Group</mat-header-cell>
+          <mat-cell *matCellDef="let element"> {{ element.pgName }} </mat-cell>
+        </ng-container>
+
+        <!-- Month & Year Column -->
+        <ng-container matColumnDef="monthYear">
+          <mat-header-cell *matHeaderCellDef>Month & Year</mat-header-cell>
+          <mat-cell *matCellDef="let element"> {{ formatMonthYear(element.month, element.year) }} </mat-cell>
+        </ng-container>
+
+        <!-- Template Column -->
+        <ng-container matColumnDef="template">
+          <mat-header-cell *matHeaderCellDef>Template</mat-header-cell>
+          <mat-cell *matCellDef="let element">
+            <ng-container *ngIf="group.selectedTemplate; else noTemplate">
+              <!-- <div class="w-[200px] overflow-hidden text-ellipsis whitespace-nowrap" matTooltip="{{ group.selectedTemplate.name }}">
+                {{ group.selectedTemplate.name }}
+              </div> -->
+              <div class="cursor-pointer flex justify-start items-center gap-3" (click)="openEmailPreview(group, element)">
+                <div>Preview Email</div>
+                <mat-icon class="ml-4">
+                  email
+                </mat-icon>
+              </div>
+            </ng-container>
+            <ng-template #noTemplate>
+              <div class="italic">No template selected</div>
+            </ng-template>
+          </mat-cell>
+        </ng-container>
+
+        <mat-header-row *matHeaderRowDef="displayedColumns"></mat-header-row>
+        <mat-row *matRowDef="let row; columns: displayedColumns;"></mat-row>
+      </mat-table>
+    </mat-expansion-panel>
+  </div>
+  </mat-accordion>
+</mat-dialog-content>
+<hr class="border-grey-300" />
+<mat-dialog-actions align="end" class="!py-[15px] !px-5">
+  <button
+    mat-stroked-button
+    class="mat-cancel !rounded-[50px]"
+    type="button"
+    (click)="closeDialog(false)"
+    id="btNo"
+    mat-dialog-close
+  >
+    Close
+  </button>
+  <button
+    mat-raised-button
+    class="mat-create !rounded-[50px]"
+    id="btnYes"
+    type="submit"
+    (click)="sendEmail()"
+    [disabled]="!allTemplatesSelected"
+  >
+  Send Email
+  </button>
+</mat-dialog-actions>
+
+<app-upload-progress-overlay *ngIf="isLoading"></app-upload-progress-overlay>

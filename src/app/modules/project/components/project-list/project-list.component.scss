@@ -1,0 +1,272 @@
+.mat-mdc-row, .mdc-data-table__content {
+    margin: 20px;
+    border: 1px solid #EEEDEF;
+    // background-color: #EEEDEF;
+    background-color: rgba(238, 237, 239, 0.56);
+    border-radius: 16px;
+}
+
+.mat-mdc-card {
+  box-shadow: none;
+}
+
+mat-header-cell:first-of-type {
+  padding-left: 37px;
+}
+
+mat-header-cell:last-of-type {
+  padding-left: 24px;
+}
+
+.mat-mdc-cell {
+    border-radius: 8px !important;
+    border-color: #EEEDEF !important;
+}
+
+.mat-mdc-table {
+    padding-bottom: 1px;
+}
+
+.project-column {
+    width: 170px;
+}
+
+#tblProjectOverview .mdc-data-table__cell {
+  padding: 0;
+}
+
+mat-card {
+  height: calc(100vh - 120px);
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+mat-card.no-data {
+  height: auto;
+}
+
+mat-card-content {
+  flex: 1;
+  overflow: hidden;
+}
+
+.table-container {
+  height: 100%;
+  overflow: auto;
+}
+
+.mat-mdc-table {
+  padding-bottom: 3%;
+}
+
+.sticky-header {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+/************************************
+ * lg => (min-width: 1024px)
+ ************************************/
+@media (min-width: 1024px) {
+
+    .project,
+    .client-span,
+    .abruf-column-span,
+    .abruf-dates-span,
+    .po-number-span,
+    .po-dates-span,
+    .remaining-budget-span,
+    .people-pg-span {
+      font-size: 0.9rem;
+    }
+
+  .client-span {
+    margin-left: 0rem;
+  }
+
+  .abruf-column-span {
+    margin-left: 4.1rem;
+  }
+
+  .abruf-dates-span {
+    margin-left: 7rem;
+  }
+
+  .po-number-span {
+    margin-left: 3.65rem;
+  }
+
+  .po-dates-span {
+    margin-left: 3.2rem;
+  }
+
+  .remaining-budget-span {
+    margin-left: 1.5rem;
+  }
+
+  .people-pg-span {
+    margin-left: 1.25rem;
+  }
+
+  .poDates {
+    margin-left: 1.2rem;
+  }
+
+  .pg {
+    margin-left: 1.2rem;
+  }
+}
+
+/************************************
+ * xl => (min-width: 1300px)
+ ************************************/
+@media (min-width: 1300px) {
+
+  .project,
+  .client-span,
+  .abruf-column-span,
+  .abruf-dates-span,
+  .po-number-span,
+  .po-dates-span,
+  .remaining-budget-span,
+  .people-pg-span {
+    font-size: 0.9rem;
+  }
+
+  .abruf-column-span {
+    margin-left: 4rem;
+  }
+
+  .abruf-dates-span {
+    margin-left: 7.2rem;
+  }
+
+  .po-number-span {
+    margin-left: 3.6rem;
+  }
+
+  .po-dates-span {
+    margin-left: 5.3rem;
+  }
+
+  .poNo {
+    min-width: 116px;
+  }
+
+  .remaining-budget-span {
+    margin-left: 2.8rem;
+  }
+
+  .people-pg-span {
+    margin-left: 4.4rem;
+  }
+
+  .poDates {
+    margin-left: 3.4rem;
+  }
+
+  .pg {
+    margin-left: 2.5rem;
+  }
+}
+
+/************************************
+ * 2xl => (min-width: 1536px)
+ ************************************/
+@media (min-width: 1536px) {
+
+    .project,
+    .client-span,
+    .abruf-column-span,
+    .abruf-dates-span,
+    .po-number-span,
+    .po-dates-span,
+    .remaining-budget-span,
+    .people-pg-span {
+      font-size: 1rem;
+    }
+
+  .abruf-column-span {
+    margin-left: 4rem;
+  }
+
+  .abruf-dates-span {
+    margin-left: 7.6rem;
+  }
+
+  .po-number-span {
+    margin-left: 3.5rem;
+  }
+
+  .po-dates-span {
+    margin-left: 7rem;
+  }
+
+  .remaining-budget-span {
+    margin-left: 6rem;
+  }
+
+  .people-pg-span {
+    margin-left: 4rem;
+  }
+
+  .poDates {
+        margin-left: 1.8rem;
+  }
+
+  .pg {
+    margin-left: -0.3rem;
+  }
+}
+
+/************************************
+ * Custom min-[1900px]
+ ************************************/
+@media (min-width: 1900px) {
+
+  .project,
+  .client-span,
+  .abruf-column-span,
+  .abruf-dates-span,
+  .po-number-span,
+  .po-dates-span,
+  .remaining-budget-span,
+  .people-pg-span {
+    font-size: 1rem;
+  }
+
+  .abruf-column-span {
+    margin-left: 4.8rem;
+  }
+
+  .abruf-dates-span {
+    margin-left: 16.5rem;
+  }
+
+  .po-number-span {
+    margin-left: 6.4rem;
+  }
+
+  .po-dates-span {
+    margin-left: 11rem;
+  }
+
+  .remaining-budget-span {
+    margin-left: 6rem;
+  }
+
+  .people-pg-span {
+    margin-left: 6rem;
+  }
+
+  .poDates {
+        margin-left: 1.8rem;
+  }
+
+  .pg {
+    margin-left: -0.3rem;
+  }
+}
+

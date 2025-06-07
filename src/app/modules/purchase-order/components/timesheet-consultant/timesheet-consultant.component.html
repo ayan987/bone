@@ -1,0 +1,279 @@
+<mat-card class="my-10">
+  <mat-card-content class="!p-0">
+    <div
+      class="flex !items-center bg-head-blue !justify-between p-4 rounded-t-lg"
+    >
+      <div class="text-xl font-semibold">Consultants</div>
+      <button
+        mat-raised-button
+        class="text-primary mat-create"
+        (click)="assignConsultantToPG()"
+      >
+        <mat-icon class="mat-18"
+          ><span class="material-symbols-outlined -mt-0.5">
+            add
+          </span></mat-icon
+        >Assign Consultant
+      </button>
+    </div>
+    <div class="timesheet-consultant-table">
+      <table mat-table [dataSource]="dataSource" id="tblConsultantOverview">
+        <!---Action--->
+        <ng-container matColumnDef="action">
+          <th mat-header-cell *matHeaderCellDef id="tblRowHeaderAction" class="fixed-width-name !w-7">
+          </th>
+          <td mat-cell *matCellDef="let row" class="!px-4">
+            <div class="flex flex-row gap-1">
+              <span class="material-symbols-outlined text-sm text-blue cursor-pointer" matTooltip="Edit Consultant" (click)="editConsultantFromPG(row)" onKeyPress=""> edit </span>
+
+              <span class="material-symbols-outlined text-sm text-red-600 cursor-pointer" matTooltip="Remove Consultant" (click)="removeConsultantFromPG(row)"> delete </span>
+            </div>
+          </td>
+        </ng-container>
+        <!--Name-->
+        <ng-container matColumnDef="name">
+          <th mat-header-cell *matHeaderCellDef id="tblRowHeaderConsultantName" class="fixed-width-name !pl-0">
+            Consultant
+          </th>
+          <td mat-cell *matCellDef="let row" class="!p-0">
+            <div class="flex flex-col">
+              <div class="consultant-name" matTooltip="{{row.name}}">{{ row.name }}</div>
+              <div class="text-grey-600 italic !text-[12px]">{{ row.email }}</div>
+            </div>
+          </td>
+        </ng-container>
+
+        <!--Start Date-->
+        <ng-container matColumnDef="startDate">
+          <th
+            mat-header-cell
+            *matHeaderCellDef
+            class="fixed-width-date"
+            id="tblRowHeaderConsultantEmail"
+          >
+            Start Date
+          </th>
+          <td mat-cell *matCellDef="let row">{{ row.startDate }}</td>
+        </ng-container>
+
+        <!--End Date-->
+        <ng-container matColumnDef="endDate">
+          <th
+            mat-header-cell
+            *matHeaderCellDef
+            class="fixed-width-date"
+            id="tblRowHeaderConsultantEmail"
+          >
+            End Date
+          </th>
+          <td mat-cell *matCellDef="let row">{{ row.endDate }}</td>
+        </ng-container>
+
+        <!-- Previous Button Column -->
+        <ng-container matColumnDef="previous">
+          <th mat-header-cell *matHeaderCellDef class="!p-0">
+            <button
+              mat-mini-fab
+              color="primary"
+              matTooltip="Previous Month"
+              matTooltipPosition="below"
+              (click)="shiftColumns('previous')"
+              [disabled]="isPreviousDisabled()"
+            >
+            <mat-icon>arrow_left</mat-icon>
+            </button>
+          </th>
+          <td mat-cell *matCellDef="let element"></td>
+        </ng-container>
+
+        <!-- Column1 -->
+        <ng-container matColumnDef="column1">
+          <th mat-header-cell *matHeaderCellDef class="fixed-width-month">
+            <div class="flex flex-row justify-center gap-2 mt-4">
+              @if (columns[0]) {
+                {{ columns[0] }}
+              } @else {
+                Month Year
+              }
+              <span *ngIf="columns[0]" class="material-symbols-outlined icon-colored cursor-pointer"
+              matTooltip="Edit {{columns[0]}} entry"
+              matTooltipPosition="below"
+              (click)="addTimeSheetEntry(dataSource, columns[0], 0)">edit_square</span>
+            </div>
+            <div class="flex flex-row justify-between font-extralight light-font mt-3 pl-4 pr-5">
+              <div>
+                <div>Onsite</div>
+                {{ changeFormatToLocal(calculateTotalOnsiteHoursColumn1()) }} hrs
+              </div>
+              <div>
+                <div>Remote</div>
+                {{ changeFormatToLocal(calculateTotalRemoteHoursColumn1()) }} hrs
+              </div>
+              <div>
+                <div>Total</div>
+                {{ changeFormatToLocal(calculateTotalHoursColumn1()) }} hrs
+              </div>
+            </div>
+          </th>
+          <td mat-cell *matCellDef="let element">
+            <div class="flex flex-row justify-between pl-4 pr-10">
+              <div>{{ changeFormatToLocal(element.columns.column1.onsiteHrs) }}</div>
+              <div class="mr-1">{{ changeFormatToLocal(element.columns.column1.remoteHrs) }}</div>
+              <div class="mr-1">{{ changeFormatToLocal(element?.columns?.column1?.totalHrs)}}</div>
+            </div>
+          </td>
+        </ng-container>
+
+        <!-- Column2 -->
+        <ng-container matColumnDef="column2">
+          <th mat-header-cell *matHeaderCellDef class="fixed-width-month">
+            <div class="flex flex-row justify-center gap-2 mt-4">
+              @if (columns[1]) {
+                {{ columns[1] }}
+              } @else {
+                Month Year
+              }
+              <span *ngIf="columns[1]" class="material-symbols-outlined icon-colored cursor-pointer"
+              matTooltip="Edit {{columns[1]}} entry"
+              matTooltipPosition="below"
+              (click)="addTimeSheetEntry(dataSource, columns[1], 1)">edit_square</span>
+            </div>
+            <div class="flex flex-row justify-between font-extralight light-font mt-3 pl-4 pr-5">
+              <div>
+                <div>Onsite</div>
+                {{ changeFormatToLocal(calculateTotalOnsiteHoursColumn2()) }} hrs
+              </div>
+              <div>
+                <div>Remote</div>
+                {{ changeFormatToLocal(calculateTotalRemoteHoursColumn2()) }} hrs
+              </div>
+              <div>
+                <div>Total</div>
+                {{ changeFormatToLocal(calculateTotalHoursColumn2()) }} hrs
+              </div>
+            </div>
+          </th>
+          <td mat-cell *matCellDef="let element">
+            <div class="flex flex-row justify-between pl-4 pr-10">
+              <div>{{ changeFormatToLocal(element.columns.column2.onsiteHrs) }}</div>
+              <div class="mr-1">{{ changeFormatToLocal(element.columns.column2.remoteHrs) }}</div>
+              <div class="mr-1">{{ changeFormatToLocal(element?.columns?.column2?.totalHrs)}}</div>
+            </div>
+          </td>
+        </ng-container>
+
+        <!-- Column3 -->
+        <ng-container matColumnDef="column3">
+          <th mat-header-cell *matHeaderCellDef class="fixed-width-month">
+            <div class="flex flex-row justify-center gap-2 mt-4">
+              @if (columns[2]) {
+                {{ columns[2] }}
+              } @else {
+                Month Year
+              }
+              <span *ngIf="columns[2]" class="material-symbols-outlined icon-colored cursor-pointer"
+              matTooltip="Edit {{columns[2]}} entry"
+              matTooltipPosition="below"
+              (click)="addTimeSheetEntry(dataSource, columns[2], 2)">edit_square</span>
+            </div>
+            <div class="flex flex-row justify-between font-extralight light-font mt-3 pl-4 pr-5">
+              <div>
+                <div>Onsite</div>
+                {{ changeFormatToLocal(calculateTotalOnsiteHoursColumn3()) }} hrs
+              </div>
+              <div>
+                <div>Remote</div>
+                {{ changeFormatToLocal(calculateTotalRemoteHoursColumn3()) }} hrs
+              </div>
+              <div>
+                <div>Total</div>
+                {{ changeFormatToLocal(calculateTotalHoursColumn3()) }} hrs
+              </div>
+            </div>
+          </th>
+          <td mat-cell *matCellDef="let element">
+            <div class="flex flex-row justify-between pl-4 pr-10">
+              <div>{{ changeFormatToLocal(element.columns.column3.onsiteHrs) }}</div>
+              <div class="mr-1">{{ changeFormatToLocal(element.columns.column3.remoteHrs) }}</div>
+              <div class="mr-1">{{ changeFormatToLocal(element?.columns?.column3?.totalHrs)}}</div>
+            </div>
+          </td>
+        </ng-container>
+
+        <!-- Column4 -->
+        <ng-container matColumnDef="column4">
+          <th mat-header-cell *matHeaderCellDef class="fixed-width-month">
+            <div class="flex flex-row justify-center gap-2 mt-4">
+              @if (columns[3]) {
+                {{ columns[3] }}
+              } @else {
+                Month Year
+              }
+              <span *ngIf="columns[3]" class="material-symbols-outlined icon-colored cursor-pointer"
+                matTooltip="Edit {{columns[3]}} entry"
+                matTooltipPosition="below"
+              (click)="addTimeSheetEntry(dataSource, columns[3], 3)">edit_square</span>
+            </div>
+            <div class="flex flex-row justify-between font-extralight light-font mt-3 pl-4 pr-5">
+              <div>
+                <div>Onsite</div>
+                {{ changeFormatToLocal(calculateTotalOnsiteHoursColumn4()) }} hrs
+              </div>
+              <div>
+                <div>Remote</div>
+                {{ changeFormatToLocal(calculateTotalRemoteHoursColumn4()) }} hrs
+              </div>
+              <div>
+                <div>Total</div>
+                {{ changeFormatToLocal(calculateTotalHoursColumn4()) }} hrs
+              </div>
+            </div>
+          </th>
+          <td mat-cell *matCellDef="let element">
+            <div class="flex flex-row justify-between pl-4 pr-10">
+              <div>{{ changeFormatToLocal(element.columns.column4.onsiteHrs) }}</div>
+              <div class="mr-1">{{ changeFormatToLocal(element.columns.column4.remoteHrs) }}</div>
+              <div class="mr-1">{{ changeFormatToLocal(element?.columns?.column4?.totalHrs)}}</div>
+            </div>
+          </td>
+        </ng-container>
+
+        <!-- Next Button Column -->
+        <ng-container matColumnDef="next">
+          <th mat-header-cell *matHeaderCellDef class="!text-right !pl-0">
+            <button
+              mat-mini-fab
+              color="primary"
+              matTooltip="Next Month"
+              matTooltipPosition="below"
+              (click)="shiftColumns('next')"
+              [disabled]="isNextDisabled()"
+            >
+            <mat-icon>arrow_right</mat-icon>
+            </button>
+          </th>
+          <td mat-cell *matCellDef="let element"></td>
+        </ng-container>
+
+        <tr
+          mat-header-row
+          *matHeaderRowDef="displayedColumns"
+          class="uppercase !bg-card-blue"
+        ></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+
+        <!-- Text inside the table -->
+        <tr class="mat-row" *matNoDataRow>
+          <td class="mat-cell" colspan="12">
+            <div
+              class="flex justify-center no-data-row italic !text-grey-600 !text-[1.1rem]"
+            >
+              No Consultants to view
+            </div>
+          </td>
+        </tr>
+      </table>
+    </div>
+  </mat-card-content>
+</mat-card>
+<app-upload-progress-overlay *ngIf="isLoading"></app-upload-progress-overlay>

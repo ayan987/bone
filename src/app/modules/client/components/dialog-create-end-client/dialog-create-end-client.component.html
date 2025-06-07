@@ -1,0 +1,138 @@
+<div class="flex items-center justify-between px-6 py-3 bg-grey-200">
+  <div class="font-bold text-xl text-grey-600">{{ data === null ? 'Create End client' : 'Edit End client' }}</div>
+  <div class="cursor-pointer flex items-center" (click)="closeDialog(false)">
+    <mat-icon>close</mat-icon>
+  </div>
+</div>
+<div mat-dialog-content [formGroup]="form">
+  <div class="flex flex-start gap-3">
+    <div class="text-base mb-2 font-medium">End Client Name <sup>*</sup></div>
+  </div>
+  <mat-form-field class="w-full mb-3 custom-form-field" appearance="outline">
+    <input matInput formControlName="endClientName" placeholder="Enter end client name" #endClientName required/>
+    <mat-hint
+    align="start"
+    [ngClass]="endClientName.value.length > 100 || endClientName.value.length < 2 ? 'text-red-500' : ''"
+    >Min. 2, Max. 100 characters</mat-hint
+  >
+    <mat-hint
+      align="end"
+      [ngClass]="endClientName.value.length > 100 || endClientName.value.length < 2 ? 'text-red-500' : ''"
+      >{{ endClientName.value.length }} / 100</mat-hint
+    >
+    <mat-error *ngIf="form.get('endClientName')?.hasError('required')">
+      End Client Name is required
+    </mat-error>
+    @if(form.get('endClientName')?.hasError('duplicateEndClient')){
+      <mat-error>End Client already exists.</mat-error>
+    }
+  </mat-form-field>
+
+  <div formArrayName="responsiblePersons">
+    <div
+      *ngFor="let person of persons.controls; let i = index"
+      [formGroupName]="i"
+      class="person-group"
+    >
+      <h3>Person {{ i + 1 }}</h3>
+
+      <div class="flex justify-between gap-3 items-center">
+        <div class="w-[30%]">
+          <div class="flex flex-start gap-3">
+            <div class="text-base mb-2 font-medium">First Name <sup>*</sup></div>
+          </div>
+          <mat-form-field class="w-full mb-3 custom-form-field" appearance="outline">
+            <input matInput formControlName="firstName" placeholder="Enter first name" #firstName required/>
+            <mat-hint
+            align="start"
+            [ngClass]="firstName.value.length > 50 || firstName.value.length < 2 ? 'text-red-500' : ''"
+            >Min. 2, Max. 50 characters</mat-hint
+          >
+            <mat-hint
+              align="end"
+              [ngClass]="firstName.value.length > 50 || firstName.value.length < 2 ? 'text-red-500' : ''"
+              >{{ firstName.value.length }} / 50</mat-hint
+            >
+            <mat-error *ngIf="person.get('firstName')?.hasError('required')">
+              First Name is required
+            </mat-error>
+          </mat-form-field>
+        </div>
+
+        <div class="w-[30%]">
+          <div class="flex flex-start gap-3">
+            <div class="text-base mb-2 font-medium">Last Name <sup>*</sup></div>
+          </div>
+          <mat-form-field class="w-full mb-3 custom-form-field" appearance="outline">
+            <input matInput formControlName="lastName" placeholder="Enter last name" #lastName required/>
+            <mat-hint
+              align="start"
+              [ngClass]="lastName.value.length > 50 || lastName.value.length < 2 ? 'text-red-500' : ''"
+              >Min. 2, Max. 50 characters</mat-hint
+            >
+            <mat-hint
+              align="end"
+              [ngClass]="lastName.value.length > 50 || lastName.value.length < 2 ? 'text-red-500' : ''"
+              >{{ lastName.value.length }} / 50</mat-hint
+            >
+            <mat-error *ngIf="person.get('lastName')?.hasError('required')">
+              Last Name is required
+            </mat-error>
+          </mat-form-field>
+        </div>
+
+        <div class="w-[30%]">
+          <div class="flex flex-start gap-3">
+            <div class="text-base mb-2 font-medium">Email</div>
+          </div>
+          <mat-form-field class="w-full mb-3 custom-form-field" appearance="outline">
+            <input matInput formControlName="email" placeholder="Enter email" />
+            <mat-error *ngIf="person.get('email')?.hasError('email') || person.get('email')?.hasError('required')">
+              Valid email is required
+            </mat-error>
+            <mat-error *ngIf="person.get('email')?.hasError('duplicateEmail')" > This email already exits </mat-error>
+          </mat-form-field>
+        </div>
+
+        <button *ngIf="!this.isEdit" mat-icon-button color="warn" (click)="removePerson(i)">
+          <mat-icon>remove_circle</mat-icon>
+        </button>
+
+      </div>
+
+      <!-- <mat-divider></mat-divider> -->
+    </div>
+  </div>
+
+  <div class="flex flex-row justify-start" id="btnAddClient">
+    <div class="flex items-center pr-2 text-add-blue cursor-pointer" (click)="addPerson()"><mat-icon>add</mat-icon>Add new Responsible Person
+    </div>
+  </div>
+
+  <!-- <button mat-button type="button" (click)="addPerson()">
+    <mat-icon>add</mat-icon> Add Responsible Person
+  </button> -->
+</div>
+
+<hr class="border-grey-300" />
+
+  <div mat-dialog-actions class="button flex justify-end px-6 gap-3" align="end">
+    <button
+      mat-stroked-button
+      class="mat-cancel !rounded-[50px]"
+      type="button"
+      (click)="closeDialog(false)"
+      id="btnCancel"
+    >
+      Cancel
+    </button>
+    <button
+      mat-raised-button
+      class="mat-create !rounded-[50px]"
+      id="btnSave"
+      [disabled]="form.invalid"
+      (click)="onSave()"
+    >
+      Save
+    </button>
+  </div>

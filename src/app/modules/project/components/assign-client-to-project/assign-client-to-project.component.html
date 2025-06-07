@@ -1,0 +1,95 @@
+<div class="flex flex-row justify-between px-6 py-3 bg-grey-200">
+  <div class="font-bold text-xl text-grey-600" id="dialogHeader">Assign Client</div>
+  <div class="cursor-pointer flex items-center" id="btnClose" (click)="closeDialog()">
+    <mat-icon>close</mat-icon>
+  </div>
+</div>
+
+<form [formGroup]="clientForm">
+  <div class="py-6 px-6">
+    <div class="flex flex-start justify-between items-center">
+      <div class="flex flex-start gap-3">
+        <div class="text-lg font-bold text-grey-600">{{ projectDetails.projectName }}</div>
+        <div
+          class="w-max h-max text-center font-medium rounded-full px-4 py-[4px]"
+          *ngIf="projectDetails"
+          [ngClass]="
+            projectDetails.status === active
+              ? '!bg-active-status-bg text-active-status-text'
+              : '!bg-inactive-status-bg text-inactive-status-text'
+          "
+        >
+          {{
+            projectDetails.status === active
+              ? "Active"
+              : "Draft"
+          }}
+        </div>
+      </div>
+      <div class="italic text-sm">{{ projectDetails.endClients != null ? projectDetails.endClients.name : 'No End Client' }}</div>
+    </div>
+
+    <div class="text-base font-bold mt-5 mb-3">Client(s) assigned to project {{ projectDetails.projectName }}</div>
+
+    <div [ngClass]="{'max-h-[200px]': showClientForm, 'max-h-[350px]': !showClientForm}" class="max-h-[350px] overflow-y-auto">
+      <div *ngFor="let client of assignedClients; let i = index" class="bg-card-back rounded-lg mb-4 last:mb-0 p-4">
+        <div class="flex flex-row justify-between">
+          <div class="font-medium">{{client.clientShortName}}</div>
+          <mat-icon class="delete-icon" matTooltip="Unassign"
+            (click)="deleteClientProject(client)">delete_forever</mat-icon>
+        </div>
+      </div>
+      <div *ngIf="assignedClients.length === 0" class="flex justify-center bg-card-back rounded-lg p-4">No clients are assigned yet</div>
+    </div>
+
+
+    <div *ngIf="showClientForm" class="pr-1 mt-3">
+      <div class="p-5 pb-0 rounded-lg mb-4 last:mb-0 bg-card-back h-[200px] overflow-y-auto">
+          <div>
+              <div class="mb-5 font-bold border-b-2 border-grey-300 pb-2">
+                  <div class="font-bold text-sm">Assign new client</div>
+              </div>
+              <mat-form-field appearance="outline" class="w-full custom-form-field custom-color">
+                    <mat-select formControlName="client" placeholder="Select a client" [compareWith]="compareClients" id="clientSelect">
+                      <mat-option *ngIf="filteredClients.length === 0" disabled>
+                        <span class="italic">No active clients available to assign to this project</span>
+                      </mat-option>
+                      <mat-option *ngFor="let client of filteredClients" [value]="client">
+                        {{ client.shortName }}
+                      </mat-option>
+                    </mat-select>
+              </mat-form-field>
+          </div>
+          <div class="button flex justify-end mb-3 gap-3">
+            <button
+              id="btnCancel"
+              type="button"
+              mat-stroked-button
+              class="mat-cancel !rounded-[50px]"
+              (click)="toggleClientFormArea()"
+            >
+              Cancel
+            </button>
+            <button
+              id="btnSave"
+              type="submit"
+              mat-raised-button
+              class="mat-create !rounded-[50px]"
+              [disabled]="!clientForm.valid || isAssigning"
+              (click)="saveClientProject()"
+            >
+              Save
+            </button>
+          </div>
+      </div>
+    </div>
+
+    <div *ngIf="!showClientForm" class="flex flex-row justify-end cursor-pointer mt-2" id="btnAddClient" (click)="toggleClientFormArea()">
+      <div class="flex items-center pr-2 text-add-blue"><mat-icon>add</mat-icon>Assign new client
+      </div>
+    </div>
+
+  </div>
+
+</form>
+<app-upload-progress-overlay *ngIf="isAssigning"></app-upload-progress-overlay>

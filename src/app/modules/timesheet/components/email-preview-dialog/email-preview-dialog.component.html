@@ -1,0 +1,42 @@
+<div class="flex items-center justify-between px-6 py-3 bg-grey-200">
+  <div class="font-bold text-xl text-grey-600">
+    Email Preview
+  </div>
+  <div class="cursor-pointer flex items-center " (click)="closeDialog()">
+    <mat-icon>close</mat-icon>
+  </div>
+</div>
+<mat-dialog-content>
+  <div class="mb-4 flex">
+    <div class="mr-2 text-blue"><strong>To:</strong></div>
+    <span class="ml-2">{{data.email}}</span>
+  </div>
+  <div *ngIf="data.cc" class="mb-4 flex">
+    <div class="mr-2 text-blue"><strong>Cc:</strong></div>
+    <span class="ml-2">To Bosenet</span>
+  </div>
+  <div *ngIf="data.clientEmail" class="mb-4 flex">
+    <div class="mr-2 text-blue"><strong>Cc:</strong></div>
+    <span class="ml-2">{{ data.clientEmail }}</span>
+  </div>
+  <div class="mb-4 flex">
+    <div class="mr-2 text-blue"><strong>Subject:</strong></div>
+    <span class="ml-2" [innerHTML]="data.subject"></span>
+  </div>
+  <div *ngIf="data.attachmentFileName" class="mb-4 flex items-center">
+    <div class="mr-2 text-blue"><strong>Attachment:</strong></div>
+    <span class="ml-2">{{ data.attachmentFileName }}</span>
+    <button mat-raised-button 
+      class="mat-create !rounded-[50px] ml-4" (click)="downloadAttachment(data.generatedTSPath)">
+      Download
+    </button>
+  </div>
+  <div>
+    <hr class="my-4 text-grey-200" />
+    <!-- <strong>Body:</strong> -->
+    <div class="mt-2" [innerHTML]="data.htmlBody"></div>
+  </div>
+</mat-dialog-content>
+<mat-dialog-actions align="end">
+  <button mat-button (click)="dialogRef.close()">Close</button>
+</mat-dialog-actions>

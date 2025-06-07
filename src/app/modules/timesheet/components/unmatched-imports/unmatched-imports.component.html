@@ -1,0 +1,279 @@
+<mat-card
+  class="mx-6 h-full overflow-auto"
+>
+  <mat-card-content class="!p-0">
+    <div>
+      <div
+        class="flex !items-center !bg-sidebar-background !justify-between rounded-t-lg sticky z-[200] top-0 p-4"
+      >
+        <div class="text-xl font-semibold text-grey-600">Unmatched Imports</div>
+      </div>
+      <div class="timesheet-table mt-4">
+        <table mat-table [dataSource]="dataSource" class="table-container">
+          <!-- Project Column -->
+          <ng-container matColumnDef="project">
+            <th mat-header-cell *matHeaderCellDef>
+              <div>Project</div>
+              <mat-form-field
+                class="w-full custom-filter-field mt-2"
+                appearance="outline"
+              >
+                <mat-select
+                  [formControl]="projectFilterCtrl"
+                  multiple
+                  placeholder="Select project"
+                  class="custom-placeholder"
+                  panelClass="custom-select-panel"
+                  (selectionChange)="applyFilters()"
+                  #projectSelection
+                >
+                  <mat-option>
+                    <ngx-mat-select-search
+                      [formControl]="projectMultiFilterCtrl"
+                      placeholderLabel="Search projects..."
+                      noEntriesFoundLabel="'No projects found'"
+                    ></ngx-mat-select-search>
+                  </mat-option>
+                  <mat-option
+                    *ngFor="let project of filteredProjects | async"
+                    [value]="project.id"
+                  >
+                    {{ project.projectName }}
+                  </mat-option>
+                </mat-select>
+              </mat-form-field>
+            </th>
+            <td mat-cell *matCellDef="let element">
+              {{ element.mappedData.projectName }}
+            </td>
+          </ng-container>
+
+          <!-- Abruf Column -->
+          <ng-container matColumnDef="abruf">
+            <th mat-header-cell *matHeaderCellDef>
+              <div>Abruf</div>
+              <mat-form-field
+                appearance="outline"
+                class="custom-filter-field custom-input-placeholder w-full mt-2"
+              >
+                <input
+                  matInput
+                  placeholder="Enter abruf name"
+                  [formControl]="abrufSearchCtrl"
+                />
+                <mat-icon matPrefix class="-mt-1.5 text-gray-500"
+                  >search</mat-icon
+                >
+                <button
+                  class="-mt-1.5 cancel-icon"
+                  *ngIf="abrufSearchCtrl.value"
+                  mat-icon-button
+                  matSuffix
+                  (click)="clearSearch('abruf')"
+                  matTooltip="Clear search"
+                >
+                  <mat-icon>cancel</mat-icon>
+                </button>
+              </mat-form-field>
+            </th>
+            <td mat-cell *matCellDef="let element">
+              <div class="overflow-hidden text-ellipsis whitespace-nowrap">
+                <span
+                  [innerHTML]="
+                    element.mappedData.abrufNo
+                    | textHighlight: abrufSearchCtrl.value
+                  "
+                ></span>
+              </div>
+              <!-- <div class="text-table-cell text-xs">{{ element.abrufStartDate | customDateFormat }} - {{ element.abrufEndDate | customDateFormat }}</div> -->
+            </td>
+          </ng-container>
+
+          <!-- Consultant Column -->
+          <ng-container matColumnDef="consultant">
+            <th mat-header-cell *matHeaderCellDef>
+              <div>Consultant Name</div>
+              <mat-form-field
+                appearance="outline"
+                class="custom-filter-field custom-input-placeholder w-full mt-2"
+              >
+                <input
+                  matInput
+                  placeholder="Enter consultant name"
+                  [formControl]="consultantSearchCtrl"
+                />
+                <mat-icon matPrefix class="-mt-1.5 text-gray-500"
+                  >search</mat-icon
+                >
+                <button
+                  class="-mt-1.5 cancel-icon"
+                  *ngIf="consultantSearchCtrl.value"
+                  mat-icon-button
+                  matSuffix
+                  (click)="clearSearch('consultant')"
+                  matTooltip="Clear search"
+                >
+                  <mat-icon>cancel</mat-icon>
+                </button>
+              </mat-form-field>
+            </th>
+            <td mat-cell *matCellDef="let element">
+              <div class="text-black">
+                <span
+                  [innerHTML]="
+                    element.mappedData.consultantName
+                    | textHighlight: consultantSearchCtrl.value
+                  "
+                ></span>
+              </div>
+            </td>
+          </ng-container>
+
+          <!-- PO Number Column -->
+          <ng-container matColumnDef="poNumber">
+            <th mat-header-cell *matHeaderCellDef>
+              <div>PO Number</div>
+              <mat-form-field
+                appearance="outline"
+                class="custom-filter-field custom-input-placeholder w-full mt-2"
+              >
+                <input
+                  matInput
+                  placeholder="Enter po number"
+                  [formControl]="poSearchCtrl"
+                />
+                <mat-icon matPrefix class="-mt-1.5 text-gray-500"
+                  >search</mat-icon
+                >
+                <button
+                  class="-mt-1.5 cancel-icon"
+                  *ngIf="poSearchCtrl.value"
+                  mat-icon-button
+                  matSuffix
+                  (click)="clearSearch('po')"
+                  matTooltip="Clear search"
+                >
+                  <mat-icon>cancel</mat-icon>
+                </button>
+              </mat-form-field>
+            </th>
+            <td mat-cell *matCellDef="let element">
+              <div class="flex justify-between">
+                <span
+                  [innerHTML]="
+                    element.mappedData.poNo
+                    | textHighlight: poSearchCtrl.value
+                  "
+                ></span>
+              </div>
+            </td>
+          </ng-container>
+
+          <!-- Hours Column -->
+          <ng-container matColumnDef="hours">
+            <th mat-header-cell *matHeaderCellDef>
+              <div>Hours</div>
+              <mat-form-field
+                appearance="outline"
+                class="custom-filter-field custom-input-placeholder w-full mt-2"
+              >
+                <input
+                  matInput
+                  placeholder="Enter hours"
+                  [formControl]="hoursSearchCtrl"
+                />
+                <mat-icon matPrefix class="-mt-1.5 text-gray-500"
+                  >search</mat-icon
+                >
+                <button
+                  class="-mt-1.5 cancel-icon"
+                  *ngIf="hoursSearchCtrl.value"
+                  mat-icon-button
+                  matSuffix
+                  (click)="clearSearch('hours')"
+                  matTooltip="Clear search"
+                >
+                  <mat-icon>cancel</mat-icon>
+                </button>
+              </mat-form-field>
+            </th>
+            <td mat-cell *matCellDef="let element">
+              <span
+                [innerHTML]="
+                  getHoursString(element)
+                  | textHighlight: hoursSearchCtrl.value
+                "
+              ></span>
+            </td>
+          </ng-container>
+
+          <!-- Import Date Column -->
+          <ng-container matColumnDef="importDate">
+            <th mat-header-cell *matHeaderCellDef>
+              <div class="-mt-4">Import Date</div>
+              <div class="border rounded-lg p-1.5 mt-2 mb-3">
+                <input
+                  type="month"
+                  id="importDate"
+                  min="2000-01"
+                  (change)="applyFilters()"
+                />
+              </div>
+            </th>
+            <td mat-cell *matCellDef="let element">
+              <div>
+                {{ element.statusDatetime | date : "MMM yyyy" }}
+              </div>
+            </td>
+          </ng-container>
+
+          <!-- Month Year Column -->
+          <ng-container matColumnDef="monthYear">
+            <th mat-header-cell *matHeaderCellDef>
+              <div class="-mt-4">Month/Year</div>
+              <div class="border rounded-lg p-1.5 mt-2 mb-3">
+                <input
+                  type="month"
+                  id="monthYear"
+                  name="monthYear"
+                  min="2000-01"
+                  (change)="applyFilters()"
+                />
+              </div>
+            </th>
+            <td mat-cell *matCellDef="let element">
+              <div>
+                {{ element.mappedData.reportMonth | germanToEnglishDate }}
+              </div>
+            </td>
+          </ng-container>
+
+
+
+          <!-- Header and Row Definitions -->
+          <tr
+            mat-header-row
+            *matHeaderRowDef="displayedColumns; sticky: true"
+            class="uppercase sticky-header"
+          ></tr>
+          <tr
+            mat-row
+            *matRowDef="let row; columns: displayedColumns"
+            (click)="viewUnmatchedTimesheetDetails(row)"
+            class="cursor-pointer"
+          ></tr>
+
+          <tr class="mat-row" *matNoDataRow>
+            <td class="mat-cell" colspan="12">
+              <div
+                class="flex justify-center no-data-row italic !text-grey-600 !text-[1.1rem]"
+              >
+                No suggestions timesheets to view
+              </div>
+            </td>
+          </tr>
+        </table>
+      </div>
+    </div>
+  </mat-card-content>
+</mat-card>

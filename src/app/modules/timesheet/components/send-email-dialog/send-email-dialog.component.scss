@@ -1,0 +1,37 @@
+// Increase the header height for better visibility of the dropdown.
+.custom-header {
+  min-height: 70px;
+  padding: 0 24px;
+}
+
+// Adjust the form-field styling if needed.
+.custom-filter-field {
+  margin-right: 8px;
+}
+
+// Style the list items to display each entry as a single row.
+.list-item {
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.list-item-content {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  padding: 8px 0;
+}
+
+.item-row {
+  display: flex;
+  align-items: center;
+  margin: 4px 0;
+}
+
+.item-row span,
+.item-row strong {
+  margin-right: 8px;
+}
+
+.mat-expansion-panel {
+  margin-bottom: 20px !important;
+}

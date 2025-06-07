@@ -1,0 +1,125 @@
+<div class="flex flex-row justify-between px-6 py-3 bg-grey-200">
+  <div class="font-bold text-xl text-grey-600">Add Hours For - {{this.data.month}}</div>
+  <div class="cursor-pointer flex items-center" (click)="closeDialog(false)">
+    <mat-icon>close</mat-icon>
+  </div>
+</div>
+
+<form [formGroup]="addTimesheetEntryForm">
+  <mat-card class="my-10 mx-6 h-[499px] overflow-auto">
+    <mat-card-content class="!p-0">
+      <div class="flex !items-center bg-card-blue !justify-between !pl-2 p-4 rounded-t-lg">
+        <div class="text-xl font-semibold">PG: {{this.data.pgName}} - {{this.data.month}}</div>
+      </div>
+      <div class="add-timesheet-entry" formArrayName="timesheetArray">
+        <table mat-table [dataSource]="dataSource" id="tbladdTimesheet">
+          <ng-container matColumnDef="consultant">
+            <th mat-header-cell *matHeaderCellDef>consultants</th>
+            <td mat-cell *matCellDef="let row;">
+              <div class="flex flex-col pb-4">
+                <div class="consultant-name" matTooltip="{{row.name}}">{{ row.name }}</div>
+                <div class="text-grey-600 italic !text-[12px]">{{ row.email }}</div>
+              </div>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="startDate">
+            <th mat-header-cell *matHeaderCellDef>start Date</th>
+            <td mat-cell *matCellDef="let row"><div class="pb-4">{{ row.startDate }}</div></td>
+          </ng-container>
+
+          <ng-container matColumnDef="endDate">
+            <th mat-header-cell *matHeaderCellDef>end Date</th>
+            <td mat-cell *matCellDef="let row"><div class="pb-4">{{ row.endDate }}</div></td>
+          </ng-container>
+
+          <ng-container matColumnDef="onsite">
+            <th mat-header-cell *matHeaderCellDef class="!text-center">
+                onsite hrs
+            </th>
+            <td mat-cell *matCellDef="let row; let i = index" [formGroupName]="i">
+              <div>
+                <mat-form-field class="w-full custom-form-field timesheet-formfield" appearance="outline">
+                  <input matInput type="text" placeholder="Hrs" formControlName="onsiteHrs" appDecimalRestriction
+                  (focus)="moveCaretToStart($event)"
+                  (blur)="formatAndValidate('timesheetArray.' + i + '.onsiteHrs')" />
+                  <mat-error *ngIf="timesheetArray.at(i).get('onsiteHrs')?.hasError('pattern')">
+                    Hours should be nearest quatrer
+                  </mat-error>
+                  <mat-error *ngIf="timesheetArray.at(i).get('onsiteHrs')?.hasError('timesheetDateRange')">
+                    Some error occured!
+                  </mat-error>
+                </mat-form-field>
+              </div>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="remote">
+            <th mat-header-cell *matHeaderCellDef class="!text-center">
+                remote hrs
+            </th>
+            <td mat-cell *matCellDef="let row; let i = index" [formGroupName]="i">
+              <div>
+                <mat-form-field class="w-full custom-form-field timesheet-formfield" appearance="outline">
+                  <input matInput type="text" placeholder="Hrs" formControlName="remoteHrs" appDecimalRestriction
+                  (focus)="moveCaretToStart($event)"
+                  (blur)="formatAndValidate('timesheetArray.' + i + '.remoteHrs')" />
+                  <mat-error *ngIf="timesheetArray.at(i).get('remoteHrs')?.hasError('pattern')">
+                    Hours should be nearest quatrer
+                  </mat-error>
+                  <mat-error *ngIf="timesheetArray.at(i).get('remoteHrs')?.hasError('timesheetDateRange')">
+                    Some error occured!
+                  </mat-error>
+                </mat-form-field>
+              </div>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="total">
+            <th mat-header-cell *matHeaderCellDef class="!text-center">total</th>
+            <td mat-cell *matCellDef="let row; let i = index" [formGroupName]="i">
+              <div class="flex flex-row items-center gap-1">
+                <div>
+                  <mat-form-field class="w-full custom-form-field custom-form-field-readonly timesheet-formfield" appearance="outline">
+                    <input matInput type="text" placeholder="Total Hrs" formControlName="totalHrs" readonly="true" #totalHrsValue/>
+                    <mat-error *ngIf="timesheetArray.at(i).get('totalHrs')?.hasError('maxValueReached')">
+                      Total hours must be within 200
+                    </mat-error>
+                  </mat-form-field>
+                </div>
+                <!-- <div class="pb-3">
+                  <span class="material-symbols-outlined" [ngClass]="!isError(row.consultantId, row.assignmentId) ? 'text-active-status-text' : 'text-red-600'">
+                    {{ isError(row.consultantId, row.assignmentId) ? 'cancel' : 'check_circle' }}
+                  </span>
+                </div> -->
+              </div>
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="displayedColumns" class="uppercase !bg-card-blue"></tr>
+          <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+
+          <!-- Text inside the table -->
+          <tr class="mat-row" *matNoDataRow>
+            <td class="mat-cell" colspan="12">
+              <div class="flex justify-center no-data-row !text-grey-600 !text-[1.1rem] italic">No Consultants to view</div>
+            </td>
+          </tr>
+        </table>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <hr class="border-grey-300 mb-4" />
+
+  <div class="button flex justify-end px-6 gap-3">
+    <button id="btnCancel" type="button" mat-stroked-button class="mat-cancel !rounded-[50px]" (click)="closeDialog(false)">
+      Cancel
+    </button>
+    <button id="btnSave" type="submit" mat-raised-button class="mat-create !rounded-[50px]" [disabled]="addTimesheetEntryForm.invalid || isAddingTimesheet" (click)="addTimeSheetEntry()">
+      Save
+    </button>
+  </div>
+</form>
+
+<app-upload-progress-overlay *ngIf="isAddingTimesheet"></app-upload-progress-overlay>

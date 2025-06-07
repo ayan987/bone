@@ -1,0 +1,68 @@
+<div *ngIf="timesheetLabels.length === 0 && !isVisible"
+    (click)="showLabelField($event)"
+    class="w-full cursor-pointer hover:bg-grey-100 px-1">
+  None
+</div>
+
+<!-- This container is shown when the dropdown is hidden -->
+<div class="show-label-container cursor-pointer"
+     *ngIf="!isVisible"
+    (click)="showLabelField($event)">
+  <mat-chip-set #chipGrid aria-label="Timesheet Labels">
+    <mat-chip-row *ngFor="let item of timesheetLabels; index as i">
+      {{ item.label }}
+    </mat-chip-row>
+  </mat-chip-set>
+</div>
+
+<!-- This container is shown when the dropdown is visible -->
+<div class="label-dropdown-container"
+     *ngIf="isVisible"
+    appClickOutside
+    (clickOutside)="onOutsideClick()"
+    class="w-72">
+  <form [formGroup]="labelForm">
+    <mat-form-field appearance="outline" class="custom-label-field w-full">
+      <mat-chip-grid #chipGrid aria-label="Timesheet Labels">
+        <span class="w-full relative">
+          <input
+            placeholder="Select label"
+            #labelInput
+            #operationTrigger="matAutocompleteTrigger"
+            formControlName="currentLabel"
+            [matChipInputFor]="chipGrid"
+            [matAutocomplete]="auto"
+            [matChipInputSeparatorKeyCodes]="separatorKeysCodes"
+            (matChipInputTokenEnd)="add($event)"
+          />
+
+          <span class="absolute top-0 right-0" *ngIf="timesheetLabels.length != 0"><mat-icon class="cursor-pointer" (click)="removeAllLabel(timesheetLabels)" matTooltip="Remove all Labels">close</mat-icon></span>
+        </span>
+        <mat-chip-row
+          *ngFor="let item of timesheetLabels; index as i"
+          (removed)="remove(item)">
+          {{ item.label }}
+          <button matChipRemove [attr.aria-label]="'remove ' + item">
+            <mat-icon>cancel</mat-icon>
+          </button>
+        </mat-chip-row>
+      </mat-chip-grid>
+
+      <mat-autocomplete
+        #auto="matAutocomplete"
+        (optionSelected)="selected($event); labelInput.value = ''"
+      >
+        <mat-option
+          *ngFor="let item of filteredLabels; index as i"
+          [value]="item"
+          (click)="operationTrigger.openPanel()"
+        >
+          {{ item.label }}
+        </mat-option>
+      </mat-autocomplete>
+    </mat-form-field>
+    <mat-error *ngIf="labelForm.get('currentLabel')?.hasError('minlength') && labelForm.get('currentLabel')?.dirty && labelForm.get('currentLabel')?.invalid ">Minimum 2 Characters</mat-error>
+    <mat-error *ngIf="labelForm.get('currentLabel')?.hasError('maxlength') && labelForm.get('currentLabel')?.dirty && labelForm.get('currentLabel')?.invalid ">Maximum 20 Characters</mat-error>
+
+  </form>
+</div>

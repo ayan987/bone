@@ -1,0 +1,32 @@
+  .fixed-width-name {
+    width: 250px;
+  }
+  
+  .fixed-width-date {
+    width: 150px;
+  }
+
+  .fixed-width-month {
+    width: 300px;
+  }
+
+  .fixed-width-month-column1 {
+    width: 180px;
+  }
+
+  .light-font {
+    font-size: 12px !important;
+  }
+
+  .icon-colored {
+    color: #2370E4;
+    font-size: 19px;
+  }
+
+  .consultant-name {
+    color: black;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
+    max-width: 230px;
+  }

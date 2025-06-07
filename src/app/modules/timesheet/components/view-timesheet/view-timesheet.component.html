@@ -1,0 +1,318 @@
+<div class="w-[600px] overflow-auto">
+  <div class="flex items-center px-5 py-5 header-bg-sidebar rounded-t-lg border-b border-[#bababa] absolute top-0 w-full z-10">
+    <div class="font-bold text-xl w-1/2">{{timesheetData?.firstName}} {{timesheetData?.lastName}}</div>
+    <div class="font-bold text-xl w-1/2">{{timesheetData?.endDateMonthYear}}</div>
+    <div class="font-bold text-xl"><mat-icon (click)="closeSideBar(false)" class="cursor-pointer">close</mat-icon></div>
+  </div>
+  <!-- Details -->
+  <div class="expansion-panel-container pt-24 mx-3">
+    <mat-expansion-panel >
+      <mat-expansion-panel-header class="!rounded-b-none">
+        <mat-panel-title class="text-lg"> Details </mat-panel-title>
+      </mat-expansion-panel-header>
+      <div class="pt-5 ">
+        <div class="flex mb-4">
+          <div class="flex items-start flex-col w-1/2">
+            <div class="font-semibold mb-1">Project</div>
+            <div class="text-table-cell">{{timesheetData?.projectName}}</div>
+          </div>
+          <div class="flex items-start flex-col w-1/2">
+            <div class="font-semibold mb-1">Client</div>
+            <div class="text-table-cell">{{timesheetData?.clientShortName}}</div>
+          </div>
+        </div>
+        <div class="flex justify-between mb-4">
+          <div class="flex items-start flex-col w-1/2">
+            <div class="font-semibold mb-1">Abruf</div>
+            <div class="text-table-cell w-64 template-name overflow-hidden text-ellipsis whitespace-nowrap cursor-pointer" matTooltip="Copy to clipboard" [applyCopyToClipboard]="timesheetData?.abrufName">{{timesheetData?.abrufName}}</div>
+          </div>
+          <div class="flex items-start flex-col w-1/4">
+            <div class="font-semibold mb-1">Start Date</div>
+            <div class="text-table-cell">{{timesheetData?.abrufStartDate ? timesheetData?.abrufStartDate : '-'}}</div>
+          </div>
+          <div class="flex items-start flex-col w-1/4">
+            <div class="font-semibold mb-1">End Date</div>
+            <div class="text-table-cell">{{timesheetData?.abrufEndDate ? timesheetData?.abrufEndDate : '-'}}</div>
+          </div>
+        </div>
+        <div class="flex justify-between mb-4">
+          <div class="flex items-start flex-col w-1/2">
+            <div class="font-semibold mb-1">PO No.</div>
+            <div class="text-table-cell">{{timesheetData?.poNo}}</div>
+          </div>
+          <div class="flex items-start flex-col w-1/4">
+            <div class="font-semibold mb-1">Start Date</div>
+            <div class="text-table-cell">{{timesheetData?.poStartDate ? timesheetData?.poStartDate : '-'}}</div>
+          </div>
+          <div class="flex items-start flex-col w-1/4">
+            <div class="font-semibold mb-1">End Date</div>
+            <div class="text-table-cell">{{timesheetData?.poEndDate ? timesheetData?.poEndDate : '-'}}</div>
+          </div>
+        </div>
+        <div class="flex justify-between mb-4">
+          <div class="flex items-start flex-col w-1/2">
+            <div class="font-semibold mb-1">PG</div>
+            <div class="text-table-cell">{{timesheetData?.pgName}}</div>
+          </div>
+          <div class="flex items-start flex-col w-1/2">
+          <div class="font-semibold mb-1">Current Status</div>
+          <div class="rounded-sm font-semibold" [ngClass]="timesheetData?.statuses?.statusKey | statusToColor">
+            {{timesheetData?.statuses?.statusGoodName}}
+          </div>
+        </div>
+          </div>
+      </div>
+    </mat-expansion-panel>
+  </div>
+  <!-- Generated Timesheet  -->
+  <div class="expansion-panel-container mt-5 mx-3">
+    <mat-expansion-panel >
+      <mat-expansion-panel-header class="!rounded-b-none">
+        <mat-panel-title class="text-lg"> Generated Timesheet </mat-panel-title>
+      </mat-expansion-panel-header>
+      <div class="pt-5 ">
+        <div class="flex mb-4">
+          <div class="flex items-start flex-col w-1/2">
+            <div class="font-semibold mb-1">Timesheet Template Name</div>
+            <div class="text-table-cell w-64 template-name overflow-hidden text-ellipsis whitespace-nowrap" matTooltip="{{ timesheetData?.poTimesheetTemplateName }}">{{timesheetData?.poTimesheetTemplateName}}</div>
+          </div>
+          <div class="flex items-start flex-col w-1/4">
+            <div class="font-semibold mb-1">Month</div>
+            <div class="text-table-cell">{{timesheetData?.endDateMonthYear}}</div>
+          </div>
+        </div>
+        <div class="flex mb-4">
+          <div class="flex items-start flex-col w-1/2">
+            <div class="font-semibold mb-1">Timestamp</div>
+            <div class="text-table-cell">{{timesheetData?.timesheetGeneratedTimestamp ? (timesheetData?.timesheetGeneratedTimestamp | date:'dd.MM.yyyy HH:mm') : '-'}}</div>
+          </div>
+          <div class="flex items-start flex-col w-1/2">
+            <div class="font-semibold mb-1">Labels</div>
+            <div class="w-full"><app-timesheet-labels [assignedLabelsObj]="assignedTimesheetLabelsObj"></app-timesheet-labels></div>
+          </div>
+        </div>
+        <div>
+          <div class="flex items-start flex-col w-1/2">
+            <div class="font-semibold mb-1">Actions</div>
+            <div class="flex justify-between w-1/3 action-icons">
+              <mat-icon
+                class="material-symbols-outlined"
+                [ngClass]="isDownloadable ? 'text-blue cursor-pointer' : 'text-grey-400 cursor-not-allowed'"
+                [matTooltip]="isDownloadable ? 'Download Timesheet' : ''"
+                (click)="isDownloadable && downloadGeneratedTimesheet(timesheetData?.generatedTSPath)">
+                download
+              </mat-icon>
+              <mat-icon class="material-symbols-outlined cursor-pointer"
+                [ngClass]="isDeletable ? 'text-red-500 cursor-pointer' : 'text-grey-400 !cursor-not-allowed'"
+                [matTooltip]="isDeletable ? 'Delete Timesheet' : ''"
+                (click)="isDeletable && deleteGeneratedTimesheet(timesheetData?.generatedTSPath, timesheetData?.id)">
+                delete
+              </mat-icon>
+              <mat-icon class="material-symbols-outlined cursor-pointer"
+                [ngClass]="isRegeneration ? 'text-green cursor-pointer' : 'text-grey-400 !cursor-not-allowed'"
+                [matTooltip]="isRegeneration ? 'Regenerate Timesheet' : ''"
+                (click)="isRegeneration && regenerateTimesheet(timesheetData)">
+                sync
+              </mat-icon>
+            </div>
+          </div>
+        </div>
+      </div>
+    </mat-expansion-panel>
+  </div>
+  <!-- Import Timesheet -->
+  <div class="expansion-panel-container mt-5 mx-3">
+    <mat-expansion-panel (opened)="getImportTimesheetData(timesheetData?.id)" >
+      <mat-expansion-panel-header class="!rounded-b-none">
+        <mat-panel-title class="text-lg"> Import Timesheet </mat-panel-title>
+      </mat-expansion-panel-header>
+      <div class="pt-5 " *ngIf="importTimesheetData?.id">
+        <div class="font-semibold mb-4 text-base">
+          <div class="flex items-center gap-3">
+            <div class="w-1/3">Import - latest</div>
+            <div class="text-table-cell italic text-sm template-name overflow-hidden text-ellipsis whitespace-nowrap" matTooltip="{{ importTimesheetData?.fileName }}">{{importTimesheetData?.fileName ? importTimesheetData?.fileName : 'No File Found'}}</div></div>
+          </div>
+
+        <div class="flex mb-4 gap-2">
+          <div class="flex items-start flex-col w-1/3">
+            <div class="font-semibold mb-1">Status</div>
+            <div class="rounded-sm font-semibold" [ngClass]="{
+              'generated': importTimesheetData?.currentStatus === 'IMPORTED',
+              'error': importTimesheetData?.currentStatus === 'UNMATCHED'
+            }">
+              {{importTimesheetData?.currentStatus | titlecase}}
+            </div>
+          </div>
+          <div class="flex items-start flex-col w-1/3">
+            <div class="font-semibold mb-1">Import Type</div>
+            <div>{{importTimesheetData?.automatic === true ? 'Automatic' : 'Manual'}}</div>
+          </div>
+          <div class="flex items-start flex-col w-1/3">
+            <div class="font-semibold mb-1">Month</div>
+            <div class="text-table-cell">{{importTimesheetData.mappedData?.reportMonth}}</div>
+          </div>
+        </div>
+        <div class="flex mb-4 gap-2">
+          <div class="flex items-start flex-col w-1/3">
+            <div class="font-semibold mb-1">Timestamp</div>
+            <div class="text-table-cell">{{util.timestampFormating(importTimesheetData?.statusDatetime)}}</div>
+          </div>
+          <div class="flex items-start flex-col w-1/3">
+            <div class="font-semibold mb-1">Total Warnings</div>
+            <div [ngClass]="{'text-red-500': importTimesheetData.totalWarnings > 0}">{{importTimesheetData?.totalWarnings ?? 0 }}</div>
+          </div>
+          <div class="flex items-start flex-col w-1/3">
+            <div class="font-semibold mb-1">Hours</div>
+            <div class="text-table-cell">{{importTimesheetData?.mappedData?.totalHours ? (importTimesheetData?.mappedData?.totalHours ?? 0) : (importTimesheetData?.mappedData?.totalRemoteHours ?? 0) + (importTimesheetData?.mappedData?.totalOnsiteHours ?? 0)}}</div>
+          </div>
+        </div>
+        <div class="flex items-center">
+          <div class="flex items-start flex-col w-[32%]">
+            <div class="font-semibold mb-1">Actions</div>
+            <div class="flex justify-between w-1/3 action-icons">
+              <mat-icon
+                class="material-symbols-outlined text-blue cursor-pointer"
+                matTooltip="Download Imported Timesheet"
+                (click)="downloadImportedTimesheet(importTimesheetData?.fileEtag, importTimesheetData?.fileName)"
+                >
+                download
+              </mat-icon>
+              <mat-icon
+                class="material-symbols-outlined text-red-500 cursor-pointer"
+                matTooltip="Cancel Manual Match"
+                *ngIf="importTimesheetData?.automatic === false && importTimesheetData?.currentStatus === importedTimesheetMatched"
+                (click)="cancelManualMatch(timesheetData, importTimesheetData)"
+                >
+                  attach_file_off
+              </mat-icon>
+            </div>
+          </div>
+        </div>
+
+        <!--Past Imports accordion-->
+        <div class="past-import-container mt-4" *ngIf="importTimesheetHistory.length > 0">
+          <mat-expansion-panel [expanded]="false" class="past-import-accordion">
+            <mat-expansion-panel-header class="!rounded-b-none !p-0">
+              <mat-panel-title class="text-lg"> Past Imports </mat-panel-title>
+            </mat-expansion-panel-header>
+            <div class="pt-5 border-t">
+              <div *ngFor="let item of importTimesheetHistory; let i = index" class="mb-6 border-b border-[#bababa] last:border-b-0 last:mb-0">
+                <div class="font-semibold mb-4 text-base">
+                  <div class="flex gap-3">
+                    <div class="w-1/3">Import {{ totalImportHistoryCount - i }} </div>
+                    <div class="text-table-cell italic text-sm template-name overflow-hidden text-ellipsis whitespace-nowrap" matTooltip="{{ item?.fileName }}">{{item?.fileName ? item?.fileName : 'No File Found'}}</div></div>
+                  </div>
+                <div class="flex mb-4 gap-2">
+                  <div class="flex items-start flex-col w-1/3">
+                    <div class="font-semibold mb-1">Status</div>
+                    <div class="rounded-sm font-semibold" [ngClass]="{
+                      'generated': item?.updatedStatus === imported,
+                      'error': item?.updatedStatus === correctionNeeded
+                    }">
+                      {{item?.updatedStatus | titlecase}}
+                    </div>
+                  </div>
+                  <div class="flex items-start flex-col w-1/3">
+                    <div class="font-semibold mb-1">Import Type</div>
+                    <div>{{item?.automatic === true ? 'Automatic': 'Manual'}}</div>
+                  </div>
+                  <div class="flex items-start flex-col w-1/3">
+                    <div class="font-semibold mb-1">Month</div>
+                    <div class="text-table-cell">{{item?.mappedData?.reportMonth}}</div>
+                  </div>
+                </div>
+                <div class="flex mb-4 gap-2">
+                  <div class="flex items-start flex-col w-1/3">
+                    <div class="font-semibold mb-1">Timestamp</div>
+                    <div class="text-table-cell">{{util.timestampFormating(item?.updatedAt)}}</div>
+                  </div>
+                  <div class="flex items-start flex-col w-1/3">
+                    <div class="font-semibold mb-1">Total Warnings</div>
+                    <div [ngClass]="{'!text-red-500': item?.totalWarnings > 0}">{{item?.totalWarnings ?? 0 }}</div>
+                  </div>
+                  <div class="flex items-start flex-col w-1/3">
+                    <div class="font-semibold mb-1">Hours</div>
+                    <div *ngIf="item" class="text-table-cell">{{item?.mappedData?.totalHours ? (item?.mappedData?.totalHours ?? 0) : (item?.mappedData?.totalRemoteHours ?? 0) + (item?.mappedData?.totalOnsiteHours ?? 0)}}</div>
+                  </div>
+                </div>
+                <div class="flex items-start flex-col w-1/4 pb-4">
+                  <div class="font-semibold mb-1">Actions</div>
+                  <div class="flex justify-between w-1/3 action-icons">
+                    <mat-icon
+                      class="material-symbols-outlined text-blue cursor-pointer"
+                      matTooltip="Download Imported Timesheet"
+                      (click)="downloadImportedTimesheet(item?.fileEtag, item?.fileName)"
+                      >
+                      download
+                    </mat-icon>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </mat-expansion-panel>
+        </div>
+      </div>
+      <div *ngIf="!importTimesheetData?.id" class="border-t border-[#bababa] italic py-8 text-base text-center text-grey-500">No Timesheet imported yet</div>
+    </mat-expansion-panel>
+  </div>
+  <!-- Documents -->
+  <div class="expansion-panel-container mt-5 mx-3">
+    <mat-expansion-panel >
+      <mat-expansion-panel-header class="!rounded-b-none">
+        <mat-panel-title class="text-lg"> Documents </mat-panel-title>
+      </mat-expansion-panel-header>
+      <div class="pt-5 "></div>
+    </mat-expansion-panel>
+  </div>
+  <!-- Comments -->
+  <div class="expansion-panel-container mt-5 mx-3">
+    <mat-expansion-panel (opened)="getDataForComments()" >
+      <mat-expansion-panel-header class="!rounded-b-none">
+        <mat-panel-title class="text-lg"> Comments </mat-panel-title>
+      </mat-expansion-panel-header>
+      <div class="pt-5 ">
+        <div class="flex items-start gap-3 justify-center">
+          <div class="profile-picture !mt-3">
+            <img *ngIf="profilePicUrl$ | async as picUrl" [src]="picUrl" alt="Profile" />
+            <mat-icon *ngIf="!(profilePicUrl$ | async)" aria-hidden="false" aria-label="search icon" fontIcon="account_circle" class="account no-profile">account</mat-icon>
+          </div>
+          <div *ngIf="!showNewCommentBox" class="w-full" (click)="showNewCommentBox = true">
+            <div class="comment-container">Enter a comment</div>
+          </div>
+          <app-comment *ngIf="showNewCommentBox" class="w-full" [commentData]="prepareCommentData()" (showCommentBox)="onCloseNew()"></app-comment>
+        </div>
+        <div class="cursor-pointer text-center py-3 text-base text-blue hover:underline" (click)="viewAllComents()" *ngIf="comments.length > 0">{{isViewAllComments? 'Hide':'View'}} All Comments({{comments.length}})</div>
+        <div class="comments-container mt-4" *ngIf="isViewAllComments">
+          <div *ngFor="let comment of comments; let i = index" class="comment-item flex items-start mb-4 last:mb-0">
+            <div class="profile-picture">
+              <img *ngIf="comment?.userProfilePicUrl" [src]="comment?.userProfilePicUrl" alt="Profile" />
+              <mat-icon *ngIf="!comment?.userProfilePicUrl" aria-hidden="false" aria-label="search icon" fontIcon="account_circle" class="account no-profile-comment">account</mat-icon>
+            </div>
+            <div class="flex flex-col ml-3 w-full">
+              <ng-container *ngIf="editingCommentId !== comment.id; else editBlock">
+                <div class="flex justify-between items-center mb-1">
+                  <div class="font-semibold">{{comment?.userName}}</div>
+                  <div class="text-sm text-grey-500">{{comment?.createdAt | timeAgo}}<span class="text-xs ml-4" *ngIf="comment?.status === 'edited'"> Edited</span></div>
+                </div>
+                <div class="text-base text-grey-700">{{comment?.comment}}</div>
+                <div class="flex items-center text-grey-600 cursor-pointer font-semibold mt-2 text-xs" *ngIf="comment?.userEmail === userLoggedInEmail">
+                  <div (click)="onEdit(comment, i)">Edit</div>
+                  <div class="ml-2" (click)="deleteComment(comment.id)">Delete</div>
+                </div>
+              </ng-container>
+
+              <!-- editBlock: shown when editingCommentId === comment.id -->
+              <ng-template #editBlock>
+                <app-comment
+                  class="w-full"
+                  [commentData]="prepareCommentData(comment)"
+                  (showCommentBox)="onCloseEdit()">
+                </app-comment>
+              </ng-template>
+            </div>
+          </div>
+        </div>
+      </div>
+    </mat-expansion-panel>
+  </div>
+</div>

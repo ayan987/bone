@@ -1,0 +1,17 @@
+.create-client-table .mdc-data-table__cell, .create-client-table .mdc-data-table__header-cell{
+  padding: 0 30px 0 30px;
+}
+
+.create-client-table th {
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.create-client-table tr:nth-child(even) {
+  background-color: rgba(244, 247, 252, 0.75);
+}
+
+.client-list-menu + * .cdk-overlay-pane > div.mat-mdc-menu-panel{
+  border-radius: 10px !important;
+  background-color: rgba(244, 247, 252, 100) !important;
+}

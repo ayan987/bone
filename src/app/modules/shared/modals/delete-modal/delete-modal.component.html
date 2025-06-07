@@ -1,0 +1,28 @@
+<div class="flex items-center justify-between px-6 py-3 bg-grey-200">
+  <div class="font-bold text-xl text-grey-600">
+    {{content?.heading}}
+  </div>
+  <div class="cursor-pointer flex items-center" (click)="closeDialog(false)">
+    <mat-icon>close</mat-icon>
+  </div>
+</div>
+<mat-dialog-content class="!text-left !text-black">
+  <div class="py-2">
+    <span class="text-xl font-bold">{{ content?.data }}</span>
+  </div>
+  <div class="grey-text">
+    {{ content?.message }}
+  </div>
+</mat-dialog-content>
+<hr class="border-grey-300" />
+<mat-dialog-actions align="end" class="!py-[15px] !px-5">
+  <button
+    mat-raised-button
+    class="mat-create !rounded-[50px]"
+    id="btnYes"
+    type="submit"
+    mat-dialog-close
+  >
+    Ok
+  </button>
+</mat-dialog-actions>

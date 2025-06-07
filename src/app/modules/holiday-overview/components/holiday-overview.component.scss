@@ -1,0 +1,152 @@
+:host {
+  display: block;
+}
+
+.month-card {
+  background-color: #f8f9fa;
+  border: 1px solid #e9ecef;
+  
+  mat-card-header {
+    padding: 12px;
+    background-color: #f1f3f5;
+    border-bottom: 1px solid #e9ecef;
+  }
+
+  mat-card-content {
+    padding: 8px;
+  }
+}
+
+.holiday-list {
+  .holiday-item {
+    display: flex;
+    gap: 8px;
+    padding: 4px 0;
+    font-size: 12px;
+    
+    .holiday-date {
+      font-weight: 500;
+      min-width: 24px;
+    }
+    
+    .holiday-name {
+      color: #666;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+  }
+
+  .no-holidays {
+    color: #999;
+    font-size: 12px;
+    text-align: center;
+    padding: 12px 0;
+  }
+}
+
+.custom-form-field {
+  .mat-mdc-form-field-subscript-wrapper {
+    display: none;
+  }
+  ::ng-deep {
+    .mat-mdc-form-field-wrapper {
+      padding: 0;
+      margin: 0;
+    }
+    
+    .mat-mdc-text-field-wrapper {
+      padding-top: 0;
+      padding-bottom: 0;
+    }
+     .mat-mdc-form-field-infix {
+      padding-top: 8px;
+      padding-bottom: 8px;
+      min-height: unset;
+    }
+  }
+}
+
+.button-container {
+  margin-top: -18px;
+}
+
+.holiday-list {
+  .holiday-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 8px;
+    font-size: 13px;
+    transition: background-color 0.2s;
+    
+    &:hover {
+      background-color: rgba(0, 0, 0, 0.04);
+    }
+    
+    .holiday-date {
+      font-weight: 500;
+      min-width: 24px;
+    }
+    
+    .holiday-name {
+      flex: 1;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+     .holiday-edit-input {
+      flex: 1;
+      border: none;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.42);
+      outline: none;
+      font-size: 12px;
+      background: transparent;
+      
+      &:focus {
+        border-bottom-color: var(--primary-color);
+      }
+    }
+    
+    .holiday-actions {
+      display: flex;
+      gap: 4px;
+      
+      mat-icon {
+        font-size: 16px;
+        width: 16px;
+        height: 16px;
+        cursor: pointer;
+      }
+    }
+  }
+}
+
+.day-select {
+  width: 45px;
+  padding: 2px;
+  border: none;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.42);
+  outline: none;
+  background: transparent;
+  font-size: 12px;
+  
+  &:focus {
+    border-bottom-color: var(--primary-color);
+  }
+}
+
+.holiday-edit-input {
+  flex: 1;
+  min-width: 100px;
+  border: none;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.42);
+  outline: none;
+  padding: 4px 0;
+  font-size: 12px;
+  background: transparent;
+
+  &:focus {
+    border-bottom-color: var(--primary-color);
+  }
+}

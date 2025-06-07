@@ -1,0 +1,254 @@
+<div class="flex flex-row justify-between px-6 py-3 bg-grey-200">
+  <div class="font-bold text-xl text-grey-600">Milestone</div>
+  <div class="cursor-pointer flex items-center" (click)="closeDialog()">
+    <mat-icon>close</mat-icon>
+  </div>
+</div>
+
+<form [formGroup]="createMilestoneForm">
+  <div class="py-6 px-6 h-[600px] overflow-auto">
+    <!--Project Name-->
+    <div class="flex flex-start gap-3">
+      <div class="text-base mb-2 font-medium">Project Name <sup>*</sup></div>
+    </div>
+    <mat-form-field class="w-full custom-form-field mb-2">
+      <mat-select
+        [formControl]="projectCtrl"
+        placeholder="Select a project with client associated..."
+        #singleSelect
+      >
+        <mat-option>
+          <ngx-mat-select-search
+            [formControl]="projectFilterCtrl"
+            placeholderLabel="search..."
+            noEntriesFoundLabel="No matching Project found..."
+          ></ngx-mat-select-search>
+        </mat-option>
+
+        <mat-option *ngFor="let prj of filteredProjects | async" [value]="prj">
+          {{ prj.projectName }} ({{ prj.shortName }})
+        </mat-option>
+      </mat-select>
+      <mat-error *ngIf="projectCtrl.touched && projectCtrl.hasError('required')"
+        >Project is required</mat-error
+      >
+      <mat-hint
+        align="end"
+        class="italic"
+        *ngIf="this.data?.endClients != null"
+        >{{ this.data.endClients.name }}</mat-hint
+      >
+    </mat-form-field>
+
+    <!--Abruf Details-->
+    <div class="text-base mb-2 flex flex-start gap-3">
+      <div>Select Abruf <sup>*</sup></div>
+    </div>
+    <div formArrayName="abrufs">
+      <div *ngFor="let other of abrufs?.controls; let i = index">
+        <div [formGroupName]="i" class="flex gap-2">
+          <mat-form-field
+            appearance="outline"
+            class="grow custom-form-field custom-color mt-1"
+          >
+            <mat-select
+              #abrufSelect
+              formControlName="abruf"
+              placeholder="Select Abruf"
+              [compareWith]="compareClients"
+            >
+              <mat-option *ngFor="let item of filteredAbrufs" [value]="item">
+                <span
+                  ><span class="text-red-600">Abruf Name - </span>
+                  {{ item.abrufName }} ,
+                </span>
+                <span
+                  ><span class="text-red-600">Abruf Number - </span>
+                  {{ item.abrufNo }} ,
+                </span>
+                <span
+                  ><span class="text-red-600">Start Date - </span>
+                  {{ item.startDate }} ,
+                </span>
+                <span
+                  ><span class="text-red-600">End Date - </span>
+                  {{ item.endDate }}</span
+                >
+              </mat-option>
+            </mat-select>
+            <mat-error *ngIf="other.get('abruf')?.hasError('required')"
+              >This field is required.</mat-error
+            >
+          </mat-form-field>
+        </div>
+      </div>
+    </div>
+    <!--Milestone form-->
+    <div *ngIf="showMilestoneForm" class="pr-1 mt-3">
+      <div class="flex flex-start gap-3">
+        <div class="text-base mb-2 font-medium">Create new Milestone</div>
+      </div>
+      <div class="p-5 rounded-lg mb-4 last:mb-0 bg-card-back">
+        <div>
+
+          <div class="flex flex-star">
+            <div class="text-base mb-2 font-medium">
+              Milestone Name<sup>*</sup>
+            </div>
+          </div>
+          <mat-form-field
+            appearance="outline"
+            class="w-full mb-2 custom-color"
+          >
+            <textarea
+              id="txtMilestoneName"
+              matInput
+              class="text-area"
+              formControlName="milestoneName"
+              placeholder="Enter a milestone"
+              (focus)="restoreValidator('milestoneName')"
+              #milestoneName
+              rows="4"
+            ></textarea>
+            <mat-hint align="start" [ngClass]="milestoneName.value.length > 700 || milestoneName.value.length < 3 ? 'text-red-500' : ''" class="text-grey-600">Min. 3, Max. 700 characters</mat-hint>
+            <mat-hint
+              align="end"
+              [ngClass]="milestoneName.value.length > 700 || milestoneName.value.length < 3 ? 'text-red-500' : ''"
+              >{{ milestoneName.value.length }} / 700</mat-hint>
+            <mat-error
+              *ngIf="
+                this.createMilestoneForm.get('milestoneName')?.touched &&
+                this.createMilestoneForm
+                  .get('milestoneName')
+                  ?.hasError('required')
+              "
+              >Milestone Name is required</mat-error >
+              <mat-error *ngIf="
+                  this.createMilestoneForm
+                    .get('milestoneName')
+                    ?.hasError('duplicateMilestone')
+                ">Milestone already exists.</mat-error>
+          </mat-form-field>
+          <div class="flex flex-row justify-between gap-2 mb-2 w-full">
+            <div class="w-[48%]">
+              <div class="flex flex-star">
+                <div class="text-base mb-2 font-medium">
+                  Milestone Start Date <sup>*</sup>
+                </div>
+              </div>
+              <mat-form-field
+                class="w-full custom-form-field date-picker"
+                appearance="outline"
+              >
+                <input
+                  matInput
+                  [matDatepicker]="startDate"
+                  placeholder="DD.MM.YYYY"
+                  formControlName="milestoneStartDate"
+                  id="txtMilestoneStartDate"
+                  (dateInput)="validateDate()"
+                  (focus)="restoreValidator('milestoneStartDate')"
+                />
+                <mat-datepicker-toggle
+                  matIconPrefix
+                  [for]="startDate"
+                ></mat-datepicker-toggle>
+                <mat-datepicker #startDate></mat-datepicker>
+                <mat-error
+                  *ngIf="
+                    this.createMilestoneForm.get('milestoneStartDate')
+                      ?.dirty && this.createMilestoneForm.get('milestoneStartDate')?.invalid
+                  "
+                  >Given Date is Invalid</mat-error
+                >
+                <mat-error
+                  *ngIf="
+                    this.createMilestoneForm
+                      .get('milestoneStartDate')
+                      ?.hasError('required')
+                  "
+                  >Start Date is required</mat-error
+                >
+              </mat-form-field>
+            </div>
+            <div class="w-[48%]">
+              <div class="flex flex-start gap-3">
+                <div class="text-base mb-2 font-medium">Milestone End Date</div>
+              </div>
+              <mat-form-field
+                class="w-full custom-form-field date-picker"
+                appearance="outline"
+              >
+                <input
+                  matInput
+                  [matDatepicker]="endDate"
+                  placeholder="DD.MM.YYYY"
+                  formControlName="milestoneEndDate"
+                  id="txtAbrufEnddate"
+                  (dateInput)="validateDate()"
+                />
+                <mat-datepicker-toggle
+                  matIconPrefix
+                  [for]="endDate"
+                ></mat-datepicker-toggle>
+                <mat-datepicker #endDate></mat-datepicker>
+                <mat-error>Given Date is Invalid</mat-error>
+              </mat-form-field>
+            </div>
+          </div>
+        </div>
+        <div class="button flex justify-end gap-3">
+          <button
+            id="btnCancel"
+            type="button"
+            mat-stroked-button
+            class="mat-cancel !rounded-[50px]"
+            (click)="toggleMilestoneFormArea()"
+          >
+            Cancel
+          </button>
+          <button
+            id="btnSave"
+            type="submit"
+            mat-raised-button
+            class="mat-create !rounded-[50px]"
+            [disabled]="createMilestoneForm.invalid || projectCtrl.invalid || this.isCreatingMilestone || showMilestoneErrorsBtn"
+            (click)="saveMilestone()"
+          >
+            Save
+          </button>
+        </div>
+      </div>
+    </div>
+    <!--Add new milestone button-->
+    <div
+      *ngIf="!showMilestoneForm"
+      class="flex flex-row justify-end cursor-pointer mt-2"
+      id="btnAddClient"
+      (click)="toggleMilestoneFormArea()"
+    >
+      <div class="flex items-center pr-2 text-add-blue">
+        <mat-icon>add</mat-icon>Add new milestone
+      </div>
+    </div>
+
+    <div *ngIf="showViewMilestone">
+      <div class="text-base font-bold mt-5 mb-3">View Milestones</div>
+
+      <div *ngFor="let milestone of viewMilestones; let i = index" class="bg-card-back rounded-lg mb-4 last:mb-0 p-4">
+        <div class="flex flex-row justify-between">
+          <div class="w-11/12 flex flex-row justify-between">
+            <div class="font-medium w-4/5 overflow-hidden text-ellipsis whitespace-nowrap cursor-pointer" [matTooltip]="clipboardTooltip" [applyCopyToClipboard]="milestone.milestoneName">{{milestone.milestoneName}}</div>
+            <div class="font-medium text-center w-[10%]">{{milestone.milestoneStartDate}}</div>
+            <div class="font-medium text-center w-[10%]">{{milestone.milestoneEndDate}}</div>
+          </div>
+          <mat-icon class="delete-icon w-1/12" matTooltip="Delete Milestone" (click)="deleteMilestoneModal(milestone)"
+            >delete_forever</mat-icon>
+        </div>
+      </div>
+      <div *ngIf="viewMilestones.length === 0" class="flex justify-center bg-card-back rounded-lg p-4">No Milestones added yet</div>
+    </div>
+  </div>
+
+  <!-- <hr class="border-grey-300 mb-4" /> -->
+</form>
