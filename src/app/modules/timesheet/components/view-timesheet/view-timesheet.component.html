@@ -169,7 +169,7 @@
         <div class="flex items-center">
           <div class="flex items-start flex-col w-[32%]">
             <div class="font-semibold mb-1">Actions</div>
-            <div class="flex justify-between w-1/3 action-icons">
+            <div class="flex justify-between w-1/3 action-icons mb-4">
               <mat-icon
                 class="material-symbols-outlined text-blue cursor-pointer"
                 matTooltip="Download Imported Timesheet"
@@ -186,6 +186,28 @@
                   attach_file_off
               </mat-icon>
             </div>
+          </div>
+        </div>
+
+        <!-- Status Dropdown and Comment Area -->
+        <div *ngIf="timesheetData?.statuses?.statusKey === 'TS_IMPORT_MATCHED' && timesheetData?.statuses?.statusGoodName === 'TS Imported'">
+          <div class="flex mb-4">
+            <div class="w-1/2">
+              <mat-form-field appearance="outline" class="w-full">
+                <mat-label>Status</mat-label>
+                <mat-select [(ngModel)]="selectedStatus">
+                  <mat-option value="approved">Approved</mat-option>
+                  <mat-option value="correction_required">Correction Required</mat-option>
+                </mat-select>
+              </mat-form-field>
+            </div>
+          </div>
+
+          <div *ngIf="selectedStatus === 'correction_required'" class="mb-4">
+            <mat-form-field appearance="outline" class="w-full">
+              <mat-label>Comments</mat-label>
+              <textarea matInput [(ngModel)]="comments" placeholder="Enter comments"></textarea>
+            </mat-form-field>
           </div>
         </div>
 

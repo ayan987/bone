@@ -21,6 +21,7 @@ import { Messages } from '../../../../models/message-enum';
 import { MatDialog } from '@angular/material/dialog';
 import { ActiveConsultant } from '../../../../models/timesheet-consultant';
 import { MatExpansionPanel } from '@angular/material/expansion';
+import { MatSelectChange } from '@angular/material/select';
 import { Subscription } from 'rxjs';
 import { AuthService } from '../../../shared/services/auth/auth.service';
 import { CommentDto } from '../../../../models/comment.model';
@@ -83,6 +84,9 @@ export interface ImportHistoryItem {
   styleUrl: './view-timesheet.component.scss',
 })
 export class ViewTimesheetComponent implements OnInit, OnChanges, OnDestroy {
+  editableStatuses: any[] = [];
+  selectedStatus: any;
+  comment: string = '';
   @Input() timesheetData?: GeneratedTimesheet;
   @Output() closeNavBar = new EventEmitter<boolean>();
   @ViewChildren(MatExpansionPanel) panels!: QueryList<MatExpansionPanel>;
@@ -141,7 +145,22 @@ export class ViewTimesheetComponent implements OnInit, OnChanges, OnDestroy {
     private consultantService: ConsultantService,
   ) {}
 
-  ngOnInit(): void {}
+  ngOnInit(): void {
+    this.timesheetService.getAllTimesheetStatusTemplates().subscribe({
+      next: (response: any) => {
+        if (response.status === 200) {
+          const allStatuses = response.body;
+          this.editableStatuses = allStatuses.filter((status: any) =>
+            ['1st lvl Approved', '2nd lvl Approved', 'Correction Required'].includes(status.statusGoodName)
+          );
+        }
+      },
+      error: (err) => {
+        console.error('Error fetching timesheet statuses:', err);
+        this.toastr.error('Failed to load statuses for dropdown.');
+      }
+    });
+  }
 
   ngOnChanges(changes: SimpleChanges): void {
     setTimeout(() => {
@@ -697,4 +716,57 @@ export class ViewTimesheetComponent implements OnInit, OnChanges, OnDestroy {
     }, 190);
   }
   /** Comments Module ends for the timesheet */
+
+  saveStatus(): void {
+    if (!this.selectedStatus) {
+      this.toastr.error('Please select a status.');
+      return;
+    }
+
+    const payload: any = {
+      statusKey: this.selectedStatus.statusKey,
+      statusGoodName: this.selectedStatus.statusGoodName,
+      datetime: new Date().toISOString(),
+    };
+
+    if (this.selectedStatus.statusGoodName === 'Correction Required') {
+      if (!this.comment || this.comment.trim() === '') {
+        this.toastr.error('Please enter a comment for correction.');
+        return;
+      }
+      payload.reason = this.comment.trim();
+    }
+
+    // Update statusHistory
+    if (this.timesheetData && this.timesheetData.statuses && this.timesheetData.statuses.statusHistory) {
+      this.timesheetData.statuses.statusHistory.push({
+        id: '', // Assuming backend generates this or it's not strictly needed on client for this push
+        statusKey: payload.statusKey,
+        statusGoodName: payload.statusGoodName,
+        datetime: payload.datetime,
+        reason: payload.reason || null,
+      });
+    } else {
+      console.error('timesheetData or statusHistory is undefined');
+      this.toastr.error('Failed to update timesheet data locally.');
+      return;
+    }
+
+
+    this.timesheetService.updateGeneratedTimesheetStatus(this.timesheetData!.id, payload).subscribe({
+      next: (response: any) => {
+        if (response.status === 204 || response.status === 200) {
+          this.toastr.success('Timesheet status updated successfully.');
+          // Optionally, refresh data or close sidebar
+          this.closeSideBar(true);
+        } else {
+          this.toastr.error('Failed to update timesheet status.');
+        }
+      },
+      error: (err) => {
+        console.error('Error updating timesheet status:', err);
+        this.toastr.error('An error occurred while updating status.');
+      }
+    });
+  }
 }
