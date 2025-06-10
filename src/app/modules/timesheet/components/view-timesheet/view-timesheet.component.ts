@@ -29,7 +29,6 @@ import { PoService } from '../../../shared/services/po/po.service';
 import { ProjectService } from '../../../project/services/project/project.service';
 import { ActiveConsultantService } from '../../services/active-consultant/active-consultant.service';
 import { ConsultantService } from '../../../shared/services/consultant/consultant.service';
-import moment from 'moment';
 
 export interface MasterData {
   auftraggeber: string;
@@ -139,7 +138,6 @@ export class ViewTimesheetComponent implements OnInit, OnChanges, OnDestroy {
     private readonly timesheetTemplateService: TimesheetTemplateService,
     private readonly poService: PoService,
     private readonly ProjectService: ProjectService,
-    private activeConsultantService: ActiveConsultantService,
     private consultantService: ConsultantService,
   ) {}
 

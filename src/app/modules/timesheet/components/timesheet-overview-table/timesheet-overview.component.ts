@@ -144,9 +144,7 @@ export class TimesheetOverviewComponent {
 
   projects: Project[] = [];
 
-  // statuses = ['GEN_QUEUED', 'TS_NOT_NEEDED', 'GEN_STARTED', 'GENERATED', 'GEN_ERROR', 'EMAIL_QUEUED', 'EMAIL_SENT', 'EMAIL_NOT_SENT', 'EMAIL_ERROR'];
   statuses = [];
-  emailStatuses = ['QUEUED', 'EMAIL_QUEUED', 'SENT', 'EMAIL_SENT', 'NOT_SENT', 'ERROR', 'EMAIL_SENT_ERROR'];
 
   // For status filter
   statusFilterCtrl: FormControl = new FormControl();
@@ -199,7 +197,6 @@ export class TimesheetOverviewComponent {
     this.getAllProjectList();
     this.getAssociatedClientProject();
 
-    this.emailFilteredStatuses.next(this.emailStatuses.slice());
     this.prepareValueChanges();
   }
 
@@ -519,24 +516,6 @@ export class TimesheetOverviewComponent {
     );
   }
 
-  private filterEmailStatuses() {
-    if (!this.emailStatuses) {
-      return;
-    }
-    // Get the search keyword
-    let search = this.emailStatusMultiFilterCtrl.value;
-    if (!search) {
-      this.emailFilteredStatuses.next(this.emailStatuses.slice());
-      return;
-    } else {
-      search = search.toLowerCase();
-    }
-    // Filter the projects
-    this.emailFilteredStatuses.next(
-      this.emailStatuses.filter((status: any) => status.toLowerCase().indexOf(search) > -1)
-    );
-  }
-
   applyFilters() {
     this.clientSelection.close();
     this.projectSelection.close();
@@ -790,13 +769,6 @@ export class TimesheetOverviewComponent {
       .subscribe(() => {
         this.filterStatuses();
       });
-
-    // Listen for email status field value changes
-    this.emailStatusMultiFilterCtrl.valueChanges
-    .pipe(takeUntil(this._onDestroy))
-    .subscribe(() => {
-      this.filterEmailStatuses();
-    });
 
     // Listen for consultant field value changes
     this.consultantSearchCtrl.valueChanges
