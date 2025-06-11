@@ -174,6 +174,7 @@ export class ViewTimesheetComponent implements OnInit, OnChanges, OnDestroy {
           }
 
           this.editableStatuses = allStatuses.filter((status: any) =>
+            status.statusKey === TimesheetStatus.imported ||
             status.statusKey === TimesheetStatus.importedTimesheetMatched ||
             status.statusGoodName === '1st lvl Approved' ||
             status.statusGoodName === '2nd lvl Approved' ||
@@ -813,7 +814,7 @@ export class ViewTimesheetComponent implements OnInit, OnChanges, OnDestroy {
     });
   }
 
-  public get isCurrentStatusEditable(): boolean {
+  public get isCurrentStatusEditable(): any {
     const currentStatusKey = this.timesheetData?.statuses?.statusKey;
     if (!currentStatusKey) {
       // console.log('isCurrentStatusEditable: currentStatusKey is missing', currentStatusKey);
@@ -821,19 +822,12 @@ export class ViewTimesheetComponent implements OnInit, OnChanges, OnDestroy {
     }
 
     const isEditable =
+      currentStatusKey === this.imported ||
       currentStatusKey === this.importedTimesheetMatched ||
       currentStatusKey === this.correctionNeeded ||
       (this.approvedLvl1Key && currentStatusKey === this.approvedLvl1Key) ||
       (this.approvedLvl2Key && currentStatusKey === this.approvedLvl2Key);
 
-    // console.log('isCurrentStatusEditable check:', {
-    //   currentStatusKey,
-    //   importedTimesheetMatched: this.importedTimesheetMatched,
-    //   correctionNeeded: this.correctionNeeded,
-    //   approvedLvl1Key: this.approvedLvl1Key,
-    //   approvedLvl2Key: this.approvedLvl2Key,
-    //   isEditable
-    // });
     return isEditable;
   }
 }

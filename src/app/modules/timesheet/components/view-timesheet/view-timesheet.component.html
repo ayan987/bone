@@ -159,12 +159,12 @@
                   </mat-select>
                 </mat-form-field>
                 <mat-icon matTooltip="cancel" class="text-red-500 cursor-pointer min-w-[25px] !-mt-5" (click)="cancelEditingStatus()">cancel</mat-icon>
-                <mat-icon matTooltip="save" class="text-green-500 cursor-pointer min-w-[25px] !-mt-5" (click)="saveStatusAndStopEditing()">check_circle</mat-icon>
+                <mat-icon matTooltip="save" class="!text-green-500 cursor-pointer min-w-[25px] !-mt-5" (click)="saveStatusAndStopEditing()">check_circle</mat-icon>
               </ng-container>
             </div>
             <div *ngIf="editingStatus && selectedStatusInEdit?.statusKey === correctionNeeded" class="w-full mt-2">
+              <mat-label>Comments</mat-label>
               <mat-form-field appearance="outline" class="w-full text-sm">
-                <mat-label>Comments</mat-label>
                 <textarea matInput [(ngModel)]="commentInEdit" placeholder="Enter comments for correction"></textarea>
               </mat-form-field>
             </div>
