@@ -92,6 +92,8 @@ export class ViewTimesheetComponent implements OnInit, OnChanges, OnDestroy {
   originalStatus: any; // To store the status before editing starts
 
   editableStatuses: any[] = [];
+  approvedLvl1Key: string | undefined;
+  approvedLvl2Key: string | undefined;
 
   @Input() timesheetData?: GeneratedTimesheet;
   @Output() closeNavBar = new EventEmitter<boolean>();
@@ -156,6 +158,21 @@ export class ViewTimesheetComponent implements OnInit, OnChanges, OnDestroy {
       next: (response: any) => {
         if (response.status === 200) {
           const allStatuses = response.body;
+
+          const status1stLvl = allStatuses.find((s: any) => s.statusGoodName === '1st lvl Approved');
+          if (status1stLvl) {
+            this.approvedLvl1Key = status1stLvl.statusKey;
+          } else {
+            console.warn('Status key for "1st lvl Approved" not found.');
+          }
+
+          const status2ndLvl = allStatuses.find((s: any) => s.statusGoodName === '2nd lvl Approved');
+          if (status2ndLvl) {
+            this.approvedLvl2Key = status2ndLvl.statusKey;
+          } else {
+            console.warn('Status key for "2nd lvl Approved" not found.');
+          }
+
           this.editableStatuses = allStatuses.filter((status: any) =>
             status.statusKey === TimesheetStatus.importedTimesheetMatched ||
             status.statusGoodName === '1st lvl Approved' ||

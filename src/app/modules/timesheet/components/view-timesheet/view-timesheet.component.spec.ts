@@ -65,8 +65,8 @@ describe('ViewTimesheetComponent', () => {
 
   const allStatusTemplates = [
     { statusKey: TimesheetStatus.importedTimesheetMatched, statusGoodName: 'TS Imported' },
-    { statusKey: 'TS_APR_1', statusGoodName: '1st lvl Approved' },
-    { statusKey: 'TS_APR_2', statusGoodName: '2nd lvl Approved' },
+    { statusKey: 'TS_APV_L1', statusGoodName: '1st lvl Approved' }, // Using specific mock key
+    { statusKey: 'TS_APV_L2', statusGoodName: '2nd lvl Approved' }, // Using specific mock key
     { statusKey: TimesheetStatus.correctionNeeded, statusGoodName: 'Correction Required' },
     { statusKey: 'TS_OTHER', statusGoodName: 'Other Status' },
   ];
@@ -144,6 +144,36 @@ describe('ViewTimesheetComponent', () => {
     expect(component).toBeTruthy();
   });
 
+  describe('ngOnInit', () => {
+    it('should assign approvedLvl1Key and approvedLvl2Key from fetched statuses', fakeAsync(() => {
+      // ngOnInit is called in the main beforeEach -> fixture.detectChanges() which calls it once.
+      // For this test, we want to control the specific mock response for getAllTimesheetStatusTemplates
+      // if it wasn't already done, or re-trigger ngOnInit if needed.
+      // However, the main beforeEach already calls it.
+      tick(); // Ensure async operations from ngOnInit complete
+
+      expect(component.approvedLvl1Key).toBe('TS_APV_L1');
+      expect(component.approvedLvl2Key).toBe('TS_APV_L2');
+    }));
+
+    it('should warn if approved level statuses are not found', fakeAsync(() => {
+      const incompleteStatuses = [
+        { statusKey: TimesheetStatus.importedTimesheetMatched, statusGoodName: 'TS Imported' },
+        { statusKey: TimesheetStatus.correctionNeeded, statusGoodName: 'Correction Required' },
+      ];
+      mockTimesheetService.getAllTimesheetStatusTemplates.and.returnValue(of(new HttpResponse({ status: 200, body: incompleteStatuses })));
+      spyOn(console, 'warn');
+
+      component.ngOnInit(); // Re-trigger with new mock
+      tick();
+
+      expect(component.approvedLvl1Key).toBeUndefined();
+      expect(component.approvedLvl2Key).toBeUndefined();
+      expect(console.warn).toHaveBeenCalledWith('Status key for "1st lvl Approved" not found.');
+      expect(console.warn).toHaveBeenCalledWith('Status key for "2nd lvl Approved" not found.');
+    }));
+  });
+
   describe('Inline Status Editing UI', () => {
     const getEditIcon = () => fixture.debugElement.query(By.css('mat-icon.ml-2.cursor-pointer'));
     const getStatusTextSpan = () => fixture.debugElement.query(By.css('ng-container[ngif="!editingStatus"] > span'));
@@ -169,8 +199,34 @@ describe('ViewTimesheetComponent', () => {
       it('should show edit icon on hover when conditions are met', () => {
         component.isStatusHovered = true;
         fixture.detectChanges();
-        expect(getEditIcon()).toBeTruthy();
+        expect(getEditIcon()).toBeTruthy(); // For TS_IMPORT_MATCHED
       });
+
+      it('should show edit icon for correctionNeeded status when hovered', fakeAsync(() => {
+        component.timesheetData!.statuses!.statusKey = component.correctionNeeded;
+        component.isStatusHovered = true;
+        fixture.detectChanges();
+        tick();
+        expect(getEditIcon()).toBeTruthy();
+      }));
+
+      it('should show edit icon for 1st lvl Approved status when hovered and key is set', fakeAsync(() => {
+        component.approvedLvl1Key = 'TS_APV_L1'; // ngOnInit should have set this
+        component.timesheetData!.statuses!.statusKey = 'TS_APV_L1';
+        component.isStatusHovered = true;
+        fixture.detectChanges();
+        tick();
+        expect(getEditIcon()).toBeTruthy();
+      }));
+
+      it('should show edit icon for 2nd lvl Approved status when hovered and key is set', fakeAsync(() => {
+        component.approvedLvl2Key = 'TS_APV_L2'; // ngOnInit should have set this
+        component.timesheetData!.statuses!.statusKey = 'TS_APV_L2';
+        component.isStatusHovered = true;
+        fixture.detectChanges();
+        tick();
+        expect(getEditIcon()).toBeTruthy();
+      }));
 
       it('should hide edit icon if not hovered', () => {
         component.isStatusHovered = false;
@@ -178,12 +234,22 @@ describe('ViewTimesheetComponent', () => {
         expect(getEditIcon()).toBeNull();
       });
 
-      it('should hide edit icon if statusKey is not TS_IMPORT_MATCHED', () => {
-        component.timesheetData!.statuses!.statusKey = TimesheetStatus.generated;
+      it('should hide edit icon if statusKey is not one of the editable keys', () => {
+        component.timesheetData!.statuses!.statusKey = 'SOME_OTHER_KEY';
         component.isStatusHovered = true;
         fixture.detectChanges();
         expect(getEditIcon()).toBeNull();
       });
+
+      it('should hide edit icon if approvedLvl1Key is undefined and status matches expected Lvl1 key', fakeAsync(() => {
+        component.approvedLvl1Key = undefined; // Simulate key not found
+        component.timesheetData!.statuses!.statusKey = 'TS_APV_L1'; // This is the key we'd expect
+        component.isStatusHovered = true;
+        fixture.detectChanges();
+        tick();
+        expect(getEditIcon()).toBeNull();
+      }));
+
     });
 
     describe('Edit Mode Toggling and UI State', () => {

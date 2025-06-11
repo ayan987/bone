@@ -137,14 +137,16 @@
           <div class="flex items-start flex-col w-3/5">
             <div class="font-semibold mb-1">Status</div>
             <div
+              (mouseenter)="isStatusHovered = true"
+              (mouseleave)="isStatusHovered = false"
               class="relative rounded-sm font-semibold flex items-center gap-2"
               [ngClass]="{'generated': importTimesheetData?.currentStatus === 'IMPORTED', 'error': importTimesheetData?.currentStatus === 'UNMATCHED'}">
 
               <ng-container *ngIf="!editingStatus">
                 <span>{{importTimesheetData?.currentStatus | titlecase}}</span>
                 <mat-icon
-                  *ngIf="timesheetData?.statuses?.statusKey === 'TS_IMPORT_MATCHED' && timesheetData?.statuses?.statusGoodName === 'TS Imported'"
-                  class="ml-2 cursor-pointer text-gray-600 hover:text-gray-800"
+                  *ngIf="isStatusHovered && !editingStatus && (timesheetData?.statuses?.statusKey === importedTimesheetMatched || timesheetData?.statuses?.statusKey === correctionNeeded || (approvedLvl1Key && timesheetData?.statuses?.statusKey === approvedLvl1Key) || (approvedLvl2Key && timesheetData?.statuses?.statusKey === approvedLvl2Key))"
+                  class="ml-2 cursor-pointer text-gray-600 hover:text-gray-800 align-middle"
                   (click)="startEditingStatus()" matTooltip="Edit status">edit</mat-icon>
               </ng-container>
 
