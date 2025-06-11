@@ -143,15 +143,14 @@
               [ngClass]="timesheetData?.statuses?.statusKey | statusToColor">
 
               <span>{{ timesheetData?.statuses?.statusGoodName }}</span>
-              <mat-icon
-                *ngIf="!isEditingStatusSectionOpen && isCurrentStatusEditable"
-                [class.text-gray-400]="isEditingStatusSectionOpen"
-                [class.text-green-600]="!isEditingStatusSectionOpen"
-                [class.hover:text-green-700]="!isEditingStatusSectionOpen"
-                class="ml-2 cursor-pointer align-middle"
-                (click)="openStatusEditSection()"
-                [disabled]="isEditingStatusSectionOpen"
-                matTooltip="Edit status">edit</mat-icon>
+              <button mat-icon-button
+                      *ngIf="!isEditingStatusSectionOpen && isCurrentStatusEditable"
+                      (click)="openStatusEditSection()"
+                      [disabled]="isEditingStatusSectionOpen || !isCurrentStatusEditable"
+                      matTooltip="Edit Status"
+                      class="align-middle ml-1">
+                <mat-icon class="text-green-600 hover:text-green-700">edit</mat-icon>
+              </button>
             </div>
             <!-- Comment area removed from here, will be part of the new section -->
           </div>

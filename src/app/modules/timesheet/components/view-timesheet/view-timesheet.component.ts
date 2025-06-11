@@ -715,10 +715,10 @@ export class ViewTimesheetComponent implements OnInit, OnChanges, OnDestroy {
         if (this.selectedStatusInEdit.statusKey === TimesheetStatus.correctionNeeded && this.commentInEdit !== (this.originalStatus?.reason || '')) {
             // Continue to save logic
         } else if (this.selectedStatusInEdit.statusKey !== TimesheetStatus.correctionNeeded) {
-             this.cancelEditingStatus();
+             this.closeStatusEditSection();
              return;
         } else if (this.selectedStatusInEdit.statusKey === TimesheetStatus.correctionNeeded && this.commentInEdit === (this.originalStatus?.reason || '')) {
-            this.cancelEditingStatus();
+            this.closeStatusEditSection();
             return;
         }
     }
