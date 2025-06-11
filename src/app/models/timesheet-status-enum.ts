@@ -9,7 +9,7 @@ export enum TimesheetStatus {
   sent = 'EMAIL_SENT',
   imported = 'TS_IMPORT_MATCHED',
   notsent = 'NOT_SENT',
-  correctionNeeded = 'CORRECTION_NEEDED',
+  correctionNeeded = 'TS_CORRECTION_REQUIRED',
   emailBounced = 'EMAIL_BOUNCED',
   unmatched = 'TS_IMPORTED_UNMATCHED',
   tsChecked = 'TS_CHECKED',
@@ -19,6 +19,8 @@ export enum TimesheetStatus {
   tsSentToClient = 'TS_SENT_TO_CLIENT',
   tsSentToClientError = 'TS_SENT_TO_CLIENT_ERROR',
   tsMatchedManually = 'TS_IMPORT_MANUALLY_MATCHED',
+  firstLevelApproval = 'TS_APPROVED_LVL_1',
+  secondLevelApproval = 'TS_APPROVED_LVL_2',
 
   // Imported timesheet statuses for import_timeheet table data
   importedTimesheetUnmatched = 'UNMATCHED',

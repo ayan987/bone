@@ -24,7 +24,9 @@ const STATUS_CLASS_MAP: Record<TimesheetStatus, string> = {
   [TimesheetStatus.tsSentToClientError]: 'text-red-600',
   [TimesheetStatus.tsMatchedManually]: 'text-green',
   [TimesheetStatus.importedTimesheetUnmatched]: 'text-pending',
-  [TimesheetStatus.importedTimesheetMatched]: 'text-green'
+  [TimesheetStatus.importedTimesheetMatched]: 'text-green',
+  [TimesheetStatus.firstLevelApproval]: 'text-green',
+  [TimesheetStatus.secondLevelApproval]: 'text-green',
 };
 
 @Pipe({ name: 'statusToColor', pure: true })
