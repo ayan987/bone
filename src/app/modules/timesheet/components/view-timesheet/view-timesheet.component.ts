@@ -86,10 +86,11 @@ export interface ImportHistoryItem {
 export class ViewTimesheetComponent implements OnInit, OnChanges, OnDestroy {
   // New properties for inline status editing
   isStatusHovered: boolean = false;
-  editingStatus: boolean = false;
+  // editingStatus: boolean = false; // Replaced by isEditingStatusSectionOpen
   selectedStatusInEdit: any; // Holds the status selected during edit mode
   commentInEdit: string = ''; // For the comment during edit mode
   originalStatus: any; // To store the status before editing starts
+  isEditingStatusSectionOpen: boolean = false;
 
   editableStatuses: any[] = [];
   approvedLvl1Key: string | undefined;
@@ -260,8 +261,8 @@ export class ViewTimesheetComponent implements OnInit, OnChanges, OnDestroy {
   }
 
   getImportTimesheetData(checksum: string | undefined): any {
-    if (this.editingStatus) {
-      this.cancelEditingStatus();
+    if (this.isEditingStatusSectionOpen) {
+      this.closeStatusEditSection();
     }
     this.timesheetService.getImportTimesheetData(checksum).subscribe({
       next: (response: any) => {
@@ -679,17 +680,20 @@ export class ViewTimesheetComponent implements OnInit, OnChanges, OnDestroy {
     }, 190);
   }
 
-  startEditingStatus(): void {
-    this.editingStatus = true;
+  openStatusEditSection(): void {
+    if (!this.isCurrentStatusEditable) {
+      return;
+    }
+    this.isEditingStatusSectionOpen = true;
     this.originalStatus = JSON.parse(JSON.stringify(this.timesheetData?.statuses));
-    this.selectedStatusInEdit = this.editableStatuses.find(
-      (s) => s.statusKey === this.timesheetData?.statuses?.statusKey
-    ) || this.timesheetData?.statuses;
+    const currentKey = this.timesheetData?.statuses?.statusKey;
+    this.selectedStatusInEdit = this.editableStatuses.find(s => s.statusKey === currentKey) ||
+                                this.timesheetData?.statuses;
     this.commentInEdit = this.timesheetData?.statuses?.reason || '';
   }
 
-  cancelEditingStatus(): void {
-    this.editingStatus = false;
+  closeStatusEditSection(): void {
+    this.isEditingStatusSectionOpen = false;
     this.selectedStatusInEdit = null;
     this.commentInEdit = '';
   }
@@ -788,33 +792,35 @@ export class ViewTimesheetComponent implements OnInit, OnChanges, OnDestroy {
                   } else {
                     this.toastr.warning('Timesheet status updated, but import status update returned an unexpected response.');
                   }
-                  this.editingStatus = false;
+                  this.isEditingStatusSectionOpen = false;
                   this.closeSideBar(true);
                 },
                 error: (importErr) => {
                   console.error('Error updating imported timesheet status:', importErr);
                   this.toastr.error('Timesheet status updated, but failed to update import status.');
-                  this.editingStatus = false;
+                  this.isEditingStatusSectionOpen = false;
                   this.closeSideBar(true);
                 }
               });
           } else {
             this.toastr.success('Timesheet status updated successfully. Import status not updated (missing data).');
-            this.editingStatus = false;
+            this.isEditingStatusSectionOpen = false;
             this.closeSideBar(true);
           }
         } else {
           this.toastr.error('Failed to update timesheet status. Unexpected response.');
+          // Potentially keep the edit section open on this kind of error
         }
       },
       error: (err) => {
         console.error('Error updating timesheet status:', err);
         this.toastr.error('An error occurred while updating status.');
+        // Potentially keep the edit section open on this kind of error
       }
     });
   }
 
-  public get isCurrentStatusEditable(): any {
+  public get isCurrentStatusEditable(): boolean {
     const currentStatusKey = this.timesheetData?.statuses?.statusKey;
     if (!currentStatusKey) {
       // console.log('isCurrentStatusEditable: currentStatusKey is missing', currentStatusKey);
@@ -828,6 +834,6 @@ export class ViewTimesheetComponent implements OnInit, OnChanges, OnDestroy {
       (this.approvedLvl1Key && currentStatusKey === this.approvedLvl1Key) ||
       (this.approvedLvl2Key && currentStatusKey === this.approvedLvl2Key);
 
-    return isEditable;
+    return !!isEditable; // Ensure boolean return
   }
 }

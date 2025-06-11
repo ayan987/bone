@@ -142,32 +142,18 @@
               class="relative rounded-sm font-semibold flex items-center gap-2"
               [ngClass]="timesheetData?.statuses?.statusKey | statusToColor">
 
-              <ng-container *ngIf="!editingStatus">
-                <span>{{ timesheetData?.statuses?.statusGoodName }}</span>
-                <mat-icon
-                  *ngIf="!editingStatus && isCurrentStatusEditable"
-                  class="ml-2 cursor-pointer text-green-600 hover:text-green-700 align-middle"
-                  (click)="startEditingStatus()" matTooltip="Edit status">edit</mat-icon>
-              </ng-container>
-
-              <ng-container *ngIf="editingStatus">
-                <mat-form-field appearance="outline" class="w-full mr-2 text-sm custom-form-field">
-                  <mat-select [(ngModel)]="selectedStatusInEdit" (selectionChange)="onStatusSelectionChange($event)">
-                    <mat-option *ngFor="let status of editableStatuses" [value]="status">
-                      {{status.statusGoodName}}
-                    </mat-option>
-                  </mat-select>
-                </mat-form-field>
-                <mat-icon matTooltip="cancel" class="text-red-500 cursor-pointer min-w-[25px] !-mt-5" (click)="cancelEditingStatus()">cancel</mat-icon>
-                <mat-icon matTooltip="save" class="!text-green-500 cursor-pointer min-w-[25px] !-mt-5" (click)="saveStatusAndStopEditing()">check_circle</mat-icon>
-              </ng-container>
+              <span>{{ timesheetData?.statuses?.statusGoodName }}</span>
+              <mat-icon
+                *ngIf="!isEditingStatusSectionOpen && isCurrentStatusEditable"
+                [class.text-gray-400]="isEditingStatusSectionOpen"
+                [class.text-green-600]="!isEditingStatusSectionOpen"
+                [class.hover:text-green-700]="!isEditingStatusSectionOpen"
+                class="ml-2 cursor-pointer align-middle"
+                (click)="openStatusEditSection()"
+                [disabled]="isEditingStatusSectionOpen"
+                matTooltip="Edit status">edit</mat-icon>
             </div>
-            <div *ngIf="editingStatus && selectedStatusInEdit?.statusKey === correctionNeeded" class="w-full mt-2">
-              <mat-label>Comments</mat-label>
-              <mat-form-field appearance="outline" class="w-full text-sm">
-                <textarea matInput [(ngModel)]="commentInEdit" placeholder="Enter comments for correction"></textarea>
-              </mat-form-field>
-            </div>
+            <!-- Comment area removed from here, will be part of the new section -->
           </div>
           <div class="flex items-start flex-col w-1/5">
             <div class="font-semibold mb-1">Import Type</div>
@@ -178,7 +164,36 @@
             <div class="text-table-cell">{{importTimesheetData.mappedData?.reportMonth}}</div>
           </div>
         </div>
-        <div class="flex mb-4 gap-2">
+
+        <!-- New Status Editing Section -->
+        <div *ngIf="isEditingStatusSectionOpen" class="border border-gray-300 p-4 rounded-md mt-4">
+          <label class="block font-semibold mb-2">Select new status</label>
+          <mat-form-field appearance="outline" class="w-full mb-3">
+            <mat-label>Status</mat-label>
+            <mat-select [(ngModel)]="selectedStatusInEdit" (selectionChange)="onStatusSelectionChange($event)">
+              <mat-option *ngFor="let status of editableStatuses" [value]="status">
+                {{status.statusGoodName}}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field *ngIf="selectedStatusInEdit?.statusKey === correctionNeeded" class="w-full mt-3 mb-3">
+            <mat-label>Reason</mat-label>
+            <input matInput [(ngModel)]="commentInEdit" placeholder="Enter reason">
+          </mat-form-field>
+
+          <div class="flex justify-end mt-4 space-x-2">
+            <button mat-icon-button (click)="closeStatusEditSection()" matTooltip="Cancel">
+              <mat-icon class="text-red-500">cancel</mat-icon>
+            </button>
+            <button mat-icon-button (click)="saveStatusAndStopEditing()" matTooltip="Save">
+              <mat-icon class="text-green-500">save</mat-icon>
+            </button>
+          </div>
+        </div>
+        <!-- End New Status Editing Section -->
+
+        <div class="flex mb-4 gap-2"> # This is the start of the next row (Timestamp, Warnings, Hours)
           <div class="flex items-start flex-col w-3/5">
             <div class="font-semibold mb-1">Timestamp</div>
             <div class="text-table-cell">{{util.timestampFormating(importTimesheetData?.statusDatetime)}}</div>

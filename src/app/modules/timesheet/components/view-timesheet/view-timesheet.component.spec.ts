@@ -58,8 +58,8 @@ describe('ViewTimesheetComponent', () => {
 
   const allStatusTemplates = [
     { statusKey: TimesheetStatus.importedTimesheetMatched, statusGoodName: 'TS Imported' },
-    { statusKey: 'TS_APV_L1', statusGoodName: '1st lvl Approved' }, // Using specific mock key
-    { statusKey: 'TS_APV_L2', statusGoodName: '2nd lvl Approved' }, // Using specific mock key
+    { statusKey: 'TS_APV_L1', statusGoodName: '1st lvl Approved' },
+    { statusKey: 'TS_APV_L2', statusGoodName: '2nd lvl Approved' },
     { statusKey: TimesheetStatus.correctionNeeded, statusGoodName: 'Correction Required' },
     { statusKey: 'TS_OTHER', statusGoodName: 'Other Status' },
   ];
@@ -164,124 +164,160 @@ describe('ViewTimesheetComponent', () => {
     }));
   });
 
-  describe('Inline Status Editing UI', () => {
-    const getEditIcon = () => fixture.debugElement.query(By.css('mat-icon.ml-2.cursor-pointer'));
-    const getStatusTextSpan = () => fixture.debugElement.query(By.css('ng-container[ngif="!editingStatus"] > span'));
-    const getDropdown = () => fixture.debugElement.query(By.css('mat-select'));
-    const getCheckIcon = () => fixture.debugElement.query(By.css('mat-icon.text-green-500'));
-    const getCancelIcon = () => fixture.debugElement.query(By.css('mat-icon.text-red-500'));
-    const getCommentTextarea = () => fixture.debugElement.query(By.css('textarea[matInput]'));
+  describe('Inline Status Editing UI', () => { // This block name might need update if UI is no longer "inline"
+    const getEditIcon = () => fixture.debugElement.query(By.css('mat-icon[mattooltip="Edit status"]'));
+    // const getStatusTextSpan = () => fixture.debugElement.query(By.css('ng-container[ngif="!editingStatus"] > span')); // Old
+    // const getDropdown = () => fixture.debugElement.query(By.css('mat-select')); // Old inline dropdown
+    // const getCheckIcon = () => fixture.debugElement.query(By.css('mat-icon.text-green-500')); // Old inline
+    // const getCancelIcon = () => fixture.debugElement.query(By.css('mat-icon.text-red-500')); // Old inline
+    // const getCommentTextarea = () => fixture.debugElement.query(By.css('textarea[matInput]')); // Old inline comment
+
+    // Helpers for new UI section
+    const getEditingSectionDiv = () => fixture.debugElement.query(By.css('div.border.border-gray-300'));
+    const getNewDropdown = () => getEditingSectionDiv()?.query(By.css('mat-select'));
+    const getNewSaveButton = () => getEditingSectionDiv()?.query(By.css('button[mattooltip="Save"]'));
+    const getNewCancelButton = () => getEditingSectionDiv()?.query(By.css('button[mattooltip="Cancel"]'));
+    const getNewReasonInput = () => getEditingSectionDiv()?.query(By.css('input[matInput][placeholder="Enter reason"]'));
+
 
     beforeEach(fakeAsync(() => {
+        component.timesheetData = JSON.parse(JSON.stringify(mockGeneratedTimesheet));
         component.timesheetData!.statuses!.statusKey = TimesheetStatus.importedTimesheetMatched;
-        component.timesheetData!.statuses!.statusGoodName = 'TS Imported';
-        if (component.importTimesheetData && component.timesheetData?.statuses?.statusGoodName) {
-             component.importTimesheetData.currentStatus = component.timesheetData.statuses.statusGoodName.toUpperCase();
-        }
-        // ngOnInit is already called by the main beforeEach's fixture.detectChanges()
-        // We call tick here to ensure any async operations from that ngOnInit are settled.
+        component.isEditingStatusSectionOpen = false; // Ensure this is reset
+        component.ngOnInit(); // Re-run to ensure keys are set based on `allStatusTemplates`
         tick();
         fixture.detectChanges();
     }));
 
-    describe('Edit Icon Visibility', () => {
-      it('should show edit icon on hover when status is importedTimesheetMatched', () => {
-        component.isStatusHovered = true;
-        fixture.detectChanges();
-        expect(getEditIcon()).toBeTruthy();
+    it('should initialize isEditingStatusSectionOpen to false', () => {
+        expect(component.isEditingStatusSectionOpen).toBeFalse();
+    });
+
+    describe('openStatusEditSection()', () => {
+      it('should set isEditingStatusSectionOpen to true and initialize editing fields if editable', () => {
+        spyOnProperty(component, 'isCurrentStatusEditable', 'get').and.returnValue(true);
+        component.openStatusEditSection();
+        expect(component.isEditingStatusSectionOpen).toBeTrue();
+        expect(component.originalStatus).toEqual(component.timesheetData!.statuses);
+        expect(component.selectedStatusInEdit).toEqual(component.editableStatuses.find(s => s.statusKey === component.timesheetData!.statuses!.statusKey));
+        expect(component.commentInEdit).toBe(component.timesheetData!.statuses!.reason || '');
       });
 
-      it('should show edit icon for correctionNeeded status when hovered', fakeAsync(() => {
-        component.timesheetData!.statuses!.statusKey = component.correctionNeeded;
-        component.isStatusHovered = true;
+      it('should not open edit section if current status is not editable', () => {
+        spyOnProperty(component, 'isCurrentStatusEditable', 'get').and.returnValue(false);
+        component.openStatusEditSection();
+        expect(component.isEditingStatusSectionOpen).toBeFalse();
+      });
+    });
+
+    describe('closeStatusEditSection()', () => {
+      it('should set isEditingStatusSectionOpen to false and clear fields', () => {
+        component.isEditingStatusSectionOpen = true;
+        component.selectedStatusInEdit = {};
+        component.commentInEdit = 'test';
+
+        component.closeStatusEditSection();
+
+        expect(component.isEditingStatusSectionOpen).toBeFalse();
+        expect(component.selectedStatusInEdit).toBeNull();
+        expect(component.commentInEdit).toBe('');
+      });
+    });
+
+    describe('Edit Icon Interaction (New UI)', () => {
+      it('should call openStatusEditSection() when main edit icon is clicked and section is not open and status is editable', fakeAsync(() => {
+        spyOn(component, 'openStatusEditSection');
+        spyOnProperty(component, 'isCurrentStatusEditable', 'get').and.returnValue(true);
+        component.isEditingStatusSectionOpen = false;
         fixture.detectChanges();
+
+        const editIcon = getEditIcon();
+        expect(editIcon).toBeTruthy("Edit icon should be visible");
+        editIcon.nativeElement.click();
         tick();
-        expect(getEditIcon()).toBeTruthy();
+
+        expect(component.openStatusEditSection).toHaveBeenCalled();
       }));
 
-      it('should show edit icon for 1st lvl Approved status when hovered and key is set', fakeAsync(() => {
-        component.approvedLvl1Key = 'TS_APV_L1';
-        component.timesheetData!.statuses!.statusKey = 'TS_APV_L1';
-        component.isStatusHovered = true;
+      it('main edit icon should be hidden if section is open', () => {
+        spyOnProperty(component, 'isCurrentStatusEditable', 'get').and.returnValue(true);
+        component.isEditingStatusSectionOpen = true;
         fixture.detectChanges();
-        tick();
-        expect(getEditIcon()).toBeTruthy();
-      }));
-
-      it('should show edit icon for 2nd lvl Approved status when hovered and key is set', fakeAsync(() => {
-        component.approvedLvl2Key = 'TS_APV_L2';
-        component.timesheetData!.statuses!.statusKey = 'TS_APV_L2';
-        component.isStatusHovered = true;
-        fixture.detectChanges();
-        tick();
-        expect(getEditIcon()).toBeTruthy();
-      }));
-
-      it('should hide edit icon if not hovered', () => {
-        component.isStatusHovered = false;
-        fixture.detectChanges();
-        expect(getEditIcon()).toBeNull();
+        expect(getEditIcon()).toBeNull(); // Because of *ngIf="!isEditingStatusSectionOpen && ..."
       });
 
-      it('should hide edit icon if statusKey is not one of the editable keys', () => {
-        component.timesheetData!.statuses!.statusKey = 'SOME_OTHER_KEY';
-        component.isStatusHovered = true;
+      it('main edit icon should be hidden if status is not editable', () => {
+        spyOnProperty(component, 'isCurrentStatusEditable', 'get').and.returnValue(false);
+        component.isEditingStatusSectionOpen = false;
         fixture.detectChanges();
-        expect(getEditIcon()).toBeNull();
+        expect(getEditIcon()).toBeNull();  // Because of *ngIf="... && isCurrentStatusEditable"
       });
+    });
 
-      it('should hide edit icon if approvedLvl1Key is undefined and status matches expected Lvl1 key', fakeAsync(() => {
-        component.approvedLvl1Key = undefined;
-        component.timesheetData!.statuses!.statusKey = 'TS_APV_L1';
-        component.isStatusHovered = true;
+    describe('New Editing Section Visibility and Content', () => {
+      it('should show the new editing section when isEditingStatusSectionOpen is true', fakeAsync(() => {
+        component.isEditingStatusSectionOpen = true;
         fixture.detectChanges();
         tick();
-        expect(getEditIcon()).toBeNull();
+        expect(getEditingSectionDiv()).toBeTruthy();
+        expect(getNewDropdown()).toBeTruthy();
+        expect(getNewSaveButton()).toBeTruthy();
+        expect(getNewCancelButton()).toBeTruthy();
+      }));
+
+      it('should hide the new editing section when isEditingStatusSectionOpen is false', fakeAsync(() => {
+        component.isEditingStatusSectionOpen = false;
+        fixture.detectChanges();
+        tick();
+        expect(getEditingSectionDiv()).toBeNull();
+      }));
+
+      it('Reason input field should be visible in new section if status is Correction Required and section is open', fakeAsync(() => {
+        component.isEditingStatusSectionOpen = true;
+        component.selectedStatusInEdit = component.editableStatuses.find(s => s.statusKey === TimesheetStatus.correctionNeeded);
+        fixture.detectChanges();
+        tick();
+        expect(getNewReasonInput()).toBeTruthy();
+      }));
+
+      it('Reason input field should be hidden in new section if status is not Correction Required and section is open', fakeAsync(() => {
+        component.isEditingStatusSectionOpen = true;
+        component.selectedStatusInEdit = component.editableStatuses.find(s => s.statusKey === 'TS_APV_L1');
+        fixture.detectChanges();
+        tick();
+        expect(getNewReasonInput()).toBeNull();
       }));
     });
 
-    describe('Edit Mode Toggling and UI State', () => {
-      it('clicking edit icon should call startEditingStatus() and enter edit mode', fakeAsync(() => {
-        spyOn(component, 'startEditingStatus').and.callThrough();
-        component.isStatusHovered = true;
+    describe('Save/Cancel Buttons in New Section', () => {
+      beforeEach(fakeAsync(() => {
+        component.isEditingStatusSectionOpen = true; // Open the section
+        // Ensure originalStatus is set, as if openStatusEditSection was called
+        component.originalStatus = JSON.parse(JSON.stringify(component.timesheetData!.statuses));
+        component.selectedStatusInEdit = component.editableStatuses.find(s => s.statusKey === component.timesheetData!.statuses!.statusKey);
+        component.commentInEdit = component.timesheetData!.statuses!.reason || '';
         fixture.detectChanges();
-
-        const editIconElement = getEditIcon();
-        expect(editIconElement).toBeTruthy('Edit icon should be present before click');
-        editIconElement.nativeElement.click();
         tick();
-        fixture.detectChanges();
-
-        expect(component.startEditingStatus).toHaveBeenCalled();
-        expect(component.editingStatus).toBeTrue();
-        expect(component.originalStatus).toEqual(jasmine.objectContaining(mockGeneratedTimesheet.statuses));
-        expect(component.selectedStatusInEdit.statusKey).toBe(mockGeneratedTimesheet.statuses.statusKey);
-        expect(getStatusTextSpan()).toBeNull();
-        expect(getDropdown()).toBeTruthy();
-        expect(getCheckIcon()).toBeTruthy();
-        expect(getCancelIcon()).toBeTruthy();
       }));
 
-      it('clicking cancel icon should call cancelEditingStatus() and exit edit mode', fakeAsync(() => {
-        component.startEditingStatus();
-        fixture.detectChanges();
-        tick();
+      it('Save button should call saveStatusAndStopEditing()', () => {
+        spyOn(component, 'saveStatusAndStopEditing');
+        const saveButton = getNewSaveButton();
+        expect(saveButton).toBeTruthy();
+        saveButton.nativeElement.click();
+        expect(component.saveStatusAndStopEditing).toHaveBeenCalled();
+      });
 
-        spyOn(component, 'cancelEditingStatus').and.callThrough();
-        const cancelIconElement = getCancelIcon();
-        expect(cancelIconElement).toBeTruthy('Cancel icon should be present before click');
-        cancelIconElement.nativeElement.click();
-        tick();
-        fixture.detectChanges();
-
-        expect(component.cancelEditingStatus).toHaveBeenCalled();
-        expect(component.editingStatus).toBeFalse();
-        expect(getStatusTextSpan()).toBeTruthy();
-        expect(getDropdown()).toBeNull();
-      }));
+      it('Cancel button should call closeStatusEditSection()', () => {
+        spyOn(component, 'closeStatusEditSection');
+        const cancelButton = getNewCancelButton();
+        expect(cancelButton).toBeTruthy();
+        cancelButton.nativeElement.click();
+        expect(component.closeStatusEditSection).toHaveBeenCalled();
+      });
     });
 
-    describe('Dropdown Population and Interaction', () => {
+    describe('Dropdown Population and Interaction (within new section)', () => {
         it('editableStatuses should be populated correctly including "TS Imported" and "Correction Required" by key', () => {
             const expectedStatusKeysOrGoodNames = [
                 TimesheetStatus.importedTimesheetMatched,
@@ -297,7 +333,7 @@ describe('ViewTimesheetComponent', () => {
         });
 
         it('onStatusSelectionChange should update selectedStatusInEdit and clear comment if not Correction Required', () => {
-            component.startEditingStatus();
+            component.openStatusEditSection();
             component.commentInEdit = 'A comment';
             fixture.detectChanges();
 
@@ -312,7 +348,7 @@ describe('ViewTimesheetComponent', () => {
         });
 
          it('onStatusSelectionChange should NOT clear comment if Correction Required is selected', () => {
-            component.startEditingStatus();
+            component.openStatusEditSection();
             fixture.detectChanges();
 
             component.selectedStatusInEdit = component.editableStatuses.find(s => s.statusKey === 'TS_APV_L1');
@@ -330,31 +366,9 @@ describe('ViewTimesheetComponent', () => {
         });
     });
 
-    describe('Conditional Comment Field in Edit Mode', () => {
-        it('should show comment field if editingStatus is true and selectedStatusInEdit is Correction Required', fakeAsync(() => {
-            component.startEditingStatus();
-            fixture.detectChanges();
-            tick();
-            component.selectedStatusInEdit = component.editableStatuses.find(s => s.statusKey === TimesheetStatus.correctionNeeded);
-            fixture.detectChanges();
-            tick();
-            expect(getCommentTextarea()).toBeTruthy();
-        }));
-
-        it('should hide comment field if selectedStatusInEdit is not Correction Required', fakeAsync(() => {
-            component.startEditingStatus();
-            fixture.detectChanges();
-            tick();
-            component.selectedStatusInEdit = component.editableStatuses.find(s => s.statusKey === 'TS_APV_L1');
-            fixture.detectChanges();
-            tick();
-            expect(getCommentTextarea()).toBeNull();
-        }));
-    });
-
     describe('saveStatusAndStopEditing()', () => {
         beforeEach(fakeAsync(() => {
-            component.startEditingStatus();
+            component.openStatusEditSection();
             fixture.detectChanges();
             tick();
         }));
@@ -365,20 +379,19 @@ describe('ViewTimesheetComponent', () => {
             expect(mockToastrService.error).toHaveBeenCalledWith('Please select a status.');
         });
 
-        it('should call cancelEditingStatus if current status (TS Imported) is re-selected without changes to comment if it was Correction Required', () => {
-            spyOn(component, 'cancelEditingStatus').and.callThrough();
-            component.selectedStatusInEdit = component.editableStatuses.find(s => s.statusKey === TimesheetStatus.importedTimesheetMatched);
+        it('should call closeStatusEditSection if current status is re-selected without changes', () => {
+            spyOn(component, 'closeStatusEditSection').and.callThrough();
+            component.selectedStatusInEdit = component.editableStatuses.find(s => s.statusKey === component.originalStatus.statusKey);
             component.commentInEdit = component.originalStatus.reason || '';
             component.saveStatusAndStopEditing();
-            expect(component.cancelEditingStatus).toHaveBeenCalled();
+            expect(component.closeStatusEditSection).toHaveBeenCalled();
             expect(mockTimesheetService.updateGeneratedTimesheetStatus).not.toHaveBeenCalled();
         });
 
         it('should save if original status was Correction Required and is re-selected but comment has changed', () => {
             component.originalStatus = { ...component.originalStatus, statusKey: TimesheetStatus.correctionNeeded, reason: 'Old comment' };
-            const tsCorStatusObject = component.editableStatuses.find(s => s.statusKey === TimesheetStatus.correctionNeeded);
-            expect(tsCorStatusObject).toBeDefined("Correction Required status object must exist in editableStatuses");
-            component.selectedStatusInEdit = tsCorStatusObject;
+            // Need to re-initialize selectedStatusInEdit and commentInEdit for this specific test case based on changed originalStatus
+            component.selectedStatusInEdit = component.editableStatuses.find(s => s.statusKey === TimesheetStatus.correctionNeeded);
             component.commentInEdit = 'New comment';
 
             mockTimesheetService.updateGeneratedTimesheetStatus.and.returnValue(of(new HttpResponse({ status: 204 })));
@@ -390,7 +403,7 @@ describe('ViewTimesheetComponent', () => {
             expect(mockTimesheetService.updateGeneratedTimesheetStatus).toHaveBeenCalled();
             expect(mockTimesheetService.updateImportedTimesheetStatus).toHaveBeenCalled();
             expect(mockToastrService.success).toHaveBeenCalledWith('Timesheet and import status updated successfully.');
-            expect(component.editingStatus).toBeFalse();
+            expect(component.isEditingStatusSectionOpen).toBeFalse();
             expect(component.closeSideBar).toHaveBeenCalledWith(true);
         });
 
@@ -404,7 +417,7 @@ describe('ViewTimesheetComponent', () => {
         });
 
         it('should call both services for new status (e.g., 1st lvl Approved with TS_APV_L1 key) and show combined success', () => {
-            component.selectedStatusInEdit = component.editableStatuses.find(s => s.statusKey === 'TS_APV_L1'); // Use the mock key
+            component.selectedStatusInEdit = component.editableStatuses.find(s => s.statusKey === 'TS_APV_L1');
             mockTimesheetService.updateGeneratedTimesheetStatus.and.returnValue(of(new HttpResponse({ status: 204 })));
             mockTimesheetService.updateImportedTimesheetStatus.and.returnValue(of(new HttpResponse({ status: 204 })));
             spyOn(component, 'closeSideBar');
@@ -422,17 +435,13 @@ describe('ViewTimesheetComponent', () => {
             expect(mockTimesheetService.updateGeneratedTimesheetStatus).toHaveBeenCalledWith(component.timesheetData!.id, jasmine.objectContaining(expectedGeneratedPayload));
             expect(mockTimesheetService.updateImportedTimesheetStatus).toHaveBeenCalledWith(component.importTimesheetData.id, 'TS_APV_L1');
             expect(mockToastrService.success).toHaveBeenCalledWith('Timesheet and import status updated successfully.');
-            expect(component.editingStatus).toBeFalse();
+            expect(component.isEditingStatusSectionOpen).toBeFalse();
             expect(component.timesheetData?.statuses?.statusKey).toBe('TS_APV_L1');
             expect(component.closeSideBar).toHaveBeenCalledWith(true);
         });
 
         it('should call updateImportedTimesheetStatus with "IMPORTED" when selected status is importedTimesheetMatched', () => {
             component.selectedStatusInEdit = component.editableStatuses.find(s => s.statusKey === TimesheetStatus.importedTimesheetMatched);
-            // This scenario implies no actual change, so saveStatusAndStopEditing might call cancelEditingStatus.
-            // However, if it were to proceed to save (e.g. comment changed for a status that allows it),
-            // we want to check the key used for the import service.
-            // Forcing a save by making it seem like a different status initially:
             component.originalStatus.statusKey = 'SOME_OTHER_KEY_TO_FORCE_SAVE';
 
             mockTimesheetService.updateGeneratedTimesheetStatus.and.returnValue(of(new HttpResponse({ status: 204 })));
@@ -465,26 +474,26 @@ describe('ViewTimesheetComponent', () => {
             expect(mockTimesheetService.updateGeneratedTimesheetStatus).toHaveBeenCalledWith(component.timesheetData!.id, jasmine.objectContaining(expectedGeneratedPayload));
             expect(mockTimesheetService.updateImportedTimesheetStatus).toHaveBeenCalledWith(component.importTimesheetData.id, TimesheetStatus.correctionNeeded);
             expect(mockToastrService.success).toHaveBeenCalledWith('Timesheet and import status updated successfully.');
-            expect(component.editingStatus).toBeFalse();
+            expect(component.isEditingStatusSectionOpen).toBeFalse();
             expect(component.timesheetData?.statuses?.statusKey).toBe(TimesheetStatus.correctionNeeded);
             expect(component.timesheetData?.statuses?.reason).toBe('Detailed correction info');
             expect(component.closeSideBar).toHaveBeenCalledWith(true);
         });
 
         it('should handle error from first API call (updateGeneratedTimesheetStatus) and remain in edit mode', () => {
-            component.selectedStatusInEdit = component.editableStatuses.find(s => s.statusKey === 'TS_APV_L1'); // Use mock key
+            component.selectedStatusInEdit = component.editableStatuses.find(s => s.statusKey === 'TS_APV_L1');
             mockTimesheetService.updateGeneratedTimesheetStatus.and.returnValue(throwError(() => new Error('API Down')));
-            spyOn(component, 'cancelEditingStatus');
+            spyOn(component, 'closeStatusEditSection');
 
             component.saveStatusAndStopEditing();
 
             expect(mockToastrService.error).toHaveBeenCalledWith('An error occurred while updating status.');
-            expect(component.editingStatus).toBeTrue();
-            expect(component.cancelEditingStatus).not.toHaveBeenCalled();
+            expect(component.isEditingStatusSectionOpen).toBeTrue();
+            expect(component.closeStatusEditSection).not.toHaveBeenCalled();
         });
 
         it('should handle error from second API call (updateImportedTimesheetStatus) and show specific error', () => {
-            component.selectedStatusInEdit = component.editableStatuses.find(s => s.statusKey === 'TS_APV_L1'); // Use mock key
+            component.selectedStatusInEdit = component.editableStatuses.find(s => s.statusKey === 'TS_APV_L1');
             mockTimesheetService.updateGeneratedTimesheetStatus.and.returnValue(of(new HttpResponse({ status: 204 })));
             mockTimesheetService.updateImportedTimesheetStatus.and.returnValue(throwError(() => new Error('Import Update Failed')));
             spyOn(component, 'closeSideBar');
@@ -492,12 +501,12 @@ describe('ViewTimesheetComponent', () => {
             component.saveStatusAndStopEditing();
 
             expect(mockToastrService.error).toHaveBeenCalledWith('Timesheet status updated, but failed to update import status.');
-            expect(component.editingStatus).toBeFalse();
+            expect(component.isEditingStatusSectionOpen).toBeFalse();
             expect(component.closeSideBar).toHaveBeenCalledWith(true);
         });
 
         it('should handle unexpected response from second API call (updateImportedTimesheetStatus)', () => {
-            component.selectedStatusInEdit = component.editableStatuses.find(s => s.statusKey === 'TS_APV_L1'); // Use mock key
+            component.selectedStatusInEdit = component.editableStatuses.find(s => s.statusKey === 'TS_APV_L1');
             mockTimesheetService.updateGeneratedTimesheetStatus.and.returnValue(of(new HttpResponse({ status: 204 })));
             mockTimesheetService.updateImportedTimesheetStatus.and.returnValue(of(new HttpResponse({ status: 201 })));
             spyOn(component, 'closeSideBar');
@@ -505,12 +514,12 @@ describe('ViewTimesheetComponent', () => {
             component.saveStatusAndStopEditing();
 
             expect(mockToastrService.warning).toHaveBeenCalledWith('Timesheet status updated, but import status update returned an unexpected response.');
-            expect(component.editingStatus).toBeFalse();
+            expect(component.isEditingStatusSectionOpen).toBeFalse();
             expect(component.closeSideBar).toHaveBeenCalledWith(true);
         });
 
         it('should show warning toast if updateImportedTimesheetStatus returns a service-generated error (e.g. 500 response)', () => {
-          component.selectedStatusInEdit = component.editableStatuses.find(s => s.statusKey === 'TS_APV_L1'); // Use mock key
+          component.selectedStatusInEdit = component.editableStatuses.find(s => s.statusKey === 'TS_APV_L1');
           mockTimesheetService.updateGeneratedTimesheetStatus.and.returnValue(of(new HttpResponse({ status: 204 })));
           mockTimesheetService.updateImportedTimesheetStatus.and.returnValue(of(new HttpResponse({ status: 500, statusText: 'Unexpected null response from HTTP call mapping', body: null })));
           spyOn(component, 'closeSideBar');
@@ -518,12 +527,12 @@ describe('ViewTimesheetComponent', () => {
           component.saveStatusAndStopEditing();
 
           expect(mockToastrService.warning).toHaveBeenCalledWith('Timesheet status updated, but import status update returned an unexpected response.');
-          expect(component.editingStatus).toBeFalse();
+          expect(component.isEditingStatusSectionOpen).toBeFalse();
           expect(component.closeSideBar).toHaveBeenCalledWith(true);
         });
 
         it('should handle missing importTimesheetData.id for the second API call', () => {
-            component.selectedStatusInEdit = component.editableStatuses.find(s => s.statusKey === 'TS_APV_L1'); // Use mock key
+            component.selectedStatusInEdit = component.editableStatuses.find(s => s.statusKey === 'TS_APV_L1');
             mockTimesheetService.updateGeneratedTimesheetStatus.and.returnValue(of(new HttpResponse({ status: 204 })));
             component.importTimesheetData.id = null;
             spyOn(component, 'closeSideBar');
@@ -532,13 +541,13 @@ describe('ViewTimesheetComponent', () => {
 
             expect(mockToastrService.success).toHaveBeenCalledWith('Timesheet status updated successfully. Import status not updated (missing data).');
             expect(mockTimesheetService.updateImportedTimesheetStatus).not.toHaveBeenCalled();
-            expect(component.editingStatus).toBeFalse();
+            expect(component.isEditingStatusSectionOpen).toBeFalse();
             expect(component.closeSideBar).toHaveBeenCalledWith(true);
         });
 
 
         it('should update importTimesheetData.currentStatus on successful save for approved status (both calls succeed)', fakeAsync(() => {
-            component.selectedStatusInEdit = component.editableStatuses.find(s => s.statusKey === 'TS_APV_L1'); // Use mock key
+            component.selectedStatusInEdit = component.editableStatuses.find(s => s.statusKey === 'TS_APV_L1');
             mockTimesheetService.updateGeneratedTimesheetStatus.and.returnValue(of(new HttpResponse({ status: 204 })));
             mockTimesheetService.updateImportedTimesheetStatus.and.returnValue(of(new HttpResponse({ status: 204 })));
             component.saveStatusAndStopEditing();
@@ -561,32 +570,32 @@ describe('ViewTimesheetComponent', () => {
     });
 
     describe('getImportTimesheetData() Behavior', () => {
-        it('should call cancelEditingStatus if editingStatus is true when data is successfully fetched', fakeAsync(() => {
-            component.startEditingStatus();
+        it('should call closeStatusEditSection if isEditingStatusSectionOpen is true when data is successfully fetched', fakeAsync(() => {
+            component.openStatusEditSection();
             fixture.detectChanges();
             tick();
-            expect(component.editingStatus).toBeTrue();
-            spyOn(component, 'cancelEditingStatus').and.callThrough();
+            expect(component.isEditingStatusSectionOpen).toBeTrue();
+            spyOn(component, 'closeStatusEditSection').and.callThrough();
 
             mockTimesheetService.getImportTimesheetData.and.returnValue(of(new HttpResponse({ status: 200, body: { importHistory: [], statusHistory: [], currentStatus: 'NEW_STATUS' } })));
             component.getImportTimesheetData('checksum-123');
             tick();
 
-            expect(component.cancelEditingStatus).toHaveBeenCalled();
-            expect(component.editingStatus).toBeFalse();
+            expect(component.closeStatusEditSection).toHaveBeenCalled();
+            expect(component.isEditingStatusSectionOpen).toBeFalse();
         }));
 
-        it('should NOT call cancelEditingStatus if editingStatus is false when getImportTimesheetData is called', fakeAsync(() => {
-            component.editingStatus = false;
+        it('should NOT call closeStatusEditSection if isEditingStatusSectionOpen is false when getImportTimesheetData is called', fakeAsync(() => {
+            component.isEditingStatusSectionOpen = false;
             fixture.detectChanges();
             tick();
-            spyOn(component, 'cancelEditingStatus').and.callThrough();
+            spyOn(component, 'closeStatusEditSection').and.callThrough();
 
             mockTimesheetService.getImportTimesheetData.and.returnValue(of(new HttpResponse({ status: 200, body: { importHistory: [], statusHistory: [] } })));
             component.getImportTimesheetData('checksum-123');
             tick();
 
-            expect(component.cancelEditingStatus).not.toHaveBeenCalled();
+            expect(component.closeStatusEditSection).not.toHaveBeenCalled();
         }));
     });
   });
