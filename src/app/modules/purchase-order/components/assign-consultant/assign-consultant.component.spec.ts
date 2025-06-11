@@ -12,7 +12,7 @@ import { BrowserAnimationsModule, NoopAnimationsModule } from '@angular/platform
 import { ConsultantStatus } from '../../../../models/consultants-status-enum';
 import { CUSTOM_ELEMENTS_SCHEMA, NO_ERRORS_SCHEMA } from '@angular/core';
 import { MatSelectModule } from '@angular/material/select';
-import { CustomDateFormatPipe } from '../../../../customDate-pipe';
+import { CustomDateFormatPipe } from '../../../../pipes/customDate-pipe';
 import { MatInputModule } from '@angular/material/input';
 
 class MockConsultantService {

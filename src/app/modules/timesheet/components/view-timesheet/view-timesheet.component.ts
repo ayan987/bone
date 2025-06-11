@@ -91,10 +91,7 @@ export class ViewTimesheetComponent implements OnInit, OnChanges, OnDestroy {
   commentInEdit: string = ''; // For the comment during edit mode
   originalStatus: any; // To store the status before editing starts
 
-  // Existing properties - selectedStatus and comment might be deprecated by the new ones
   editableStatuses: any[] = [];
-  // selectedStatus: any; // Potentially replaced by selectedStatusInEdit
-  // comment: string = ''; // Potentially replaced by commentInEdit
 
   @Input() timesheetData?: GeneratedTimesheet;
   @Output() closeNavBar = new EventEmitter<boolean>();
@@ -109,10 +106,10 @@ export class ViewTimesheetComponent implements OnInit, OnChanges, OnDestroy {
   notneeded = TimesheetStatus.notneeded;
   tsdeleted = TimesheetStatus.tsdeleted;
   imported = TimesheetStatus.imported;
-  correctionNeeded = TimesheetStatus.correctionNeeded;
+  correctionNeeded = TimesheetStatus.correctionNeeded; // This is 'TS_CORRECTION_REQUIRED'
   sent = TimesheetStatus.sent;
   unmatched = TimesheetStatus.importedTimesheetUnmatched;
-  importedTimesheetMatched = TimesheetStatus.importedTimesheetMatched;
+  importedTimesheetMatched = TimesheetStatus.importedTimesheetMatched; // This is 'TS_IMPORT_MATCHED'
 
   importTimesheetData: any = [];
   importTimesheetHistory: ImportHistoryItem[] = [];
@@ -160,10 +157,10 @@ export class ViewTimesheetComponent implements OnInit, OnChanges, OnDestroy {
         if (response.status === 200) {
           const allStatuses = response.body;
           this.editableStatuses = allStatuses.filter((status: any) =>
-            status.statusKey === TimesheetStatus.importedTimesheetMatched || // TS Imported
+            status.statusKey === TimesheetStatus.importedTimesheetMatched ||
             status.statusGoodName === '1st lvl Approved' ||
             status.statusGoodName === '2nd lvl Approved' ||
-            status.statusKey === TimesheetStatus.correctionNeeded // TS_CORRECTION_REQUIRED
+            status.statusKey === TimesheetStatus.correctionNeeded
           );
         }
       },
@@ -196,11 +193,9 @@ export class ViewTimesheetComponent implements OnInit, OnChanges, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    // Clean up the subscription
     this.userNameSub?.unsubscribe();
   }
 
-  /** Download the imported timesheet */
   downloadImportedTimesheet(eTag: string, excelFileName: string): void{
     if (eTag && excelFileName) {
       const snackBarRef = this._snackBar.open('Downloading...');
@@ -240,13 +235,10 @@ export class ViewTimesheetComponent implements OnInit, OnChanges, OnDestroy {
     }
   }
 
-  /** Get the data of the import timsheet */
   getImportTimesheetData(checksum: string | undefined): any {
     if (this.editingStatus) {
       this.cancelEditingStatus();
     }
-    console.log(checksum);
-    // if(this.timesheetData?.statuses?.statusKey === this.imported){
     this.timesheetService.getImportTimesheetData(checksum).subscribe({
       next: (response: any) => {
         if (response.status === 200) {
@@ -255,7 +247,7 @@ export class ViewTimesheetComponent implements OnInit, OnChanges, OnDestroy {
           );
           this.importTimesheetData = timehseetObj.timesheetData;
           this.importTimesheetHistory = timehseetObj.timehseetHistory;
-          this.totalImportHistoryCount = this.importTimesheetHistory.length; //Count the number of items present
+          this.totalImportHistoryCount = this.importTimesheetHistory.length;
         }
       },
       error: (err) => {
@@ -263,28 +255,21 @@ export class ViewTimesheetComponent implements OnInit, OnChanges, OnDestroy {
         console.log('No timesheet to view');
       },
     });
-    // } else {
-    //   console.log("Import a timesheet first");
-    // }
-
     this.onPanelOpened(3);
   }
-  /** Get the status of the import history */
+
   showImportHistoryStatus(importData: any) {
     let importTimesheetHistory = [...(importData.importHistory ?? [])]
-      .reverse() //Reverse the history data for latest on top
+      .reverse();
     let importTimesheetData = importData;
 
-    // 1) Build a lookup from statusDatetime -> status
     const statusMap: Record<string, string> = {};
     importTimesheetData.statusHistory.forEach((historyItem: any) => {
       statusMap[historyItem.statusDatetime] = historyItem.status;
     });
 
-    // 2) For each item in importTimesheetHistory, look up updatedStatus from statusMap
     importTimesheetHistory = importTimesheetHistory.map((histItem: any) => {
       const matchingStatus = statusMap[histItem.updatedAt] || 'Unknown';
-      // Return a new object with all original properties plus updatedStatus for the history of the imported timesheet
       return {
         ...histItem,
         updatedStatus: matchingStatus,
@@ -295,7 +280,7 @@ export class ViewTimesheetComponent implements OnInit, OnChanges, OnDestroy {
       timehseetHistory: importTimesheetHistory,
     };
   }
-  /** Trigger the on navbar on close */
+
   closeSideBar(loadData: boolean): void {
     this.closeNavBar.emit(loadData);
     this.resetPanelStates();
@@ -354,8 +339,8 @@ export class ViewTimesheetComponent implements OnInit, OnChanges, OnDestroy {
           next: (response: any) => {
             if (response.status === 204) {
               this.timesheetService.updateImportedTimesheetStatus(importTimesheetData.id, this.unmatched).subscribe({
-                next: (response: any) => {
-                  if (response.status === 204) {
+                next: (resp: any) => {
+                  if (resp.status === 204) {
                     console.log('Updated Imported timesheet status to unmatched');
                   }
                 }, error: (err) => {console.log(err)}});
@@ -373,7 +358,6 @@ export class ViewTimesheetComponent implements OnInit, OnChanges, OnDestroy {
     });
   }
 
-  /** Download the generated timesheet */
   downloadGeneratedTimesheet(timesheetUrl: string | undefined): void {
     if (timesheetUrl) {
       const snackBarRef = this._snackBar.open('Downloading...');
@@ -413,7 +397,6 @@ export class ViewTimesheetComponent implements OnInit, OnChanges, OnDestroy {
     }
   }
 
-  /**Delete of the generated timesheet */
   deleteGeneratedTimesheet(
     timesheetUrl: string | undefined,
     timesheetId: string | undefined
@@ -452,7 +435,6 @@ export class ViewTimesheetComponent implements OnInit, OnChanges, OnDestroy {
     }
   }
 
-  /** Regenerate the timesheet */
   regenerateTimesheet(consultantData?: GeneratedTimesheet): void {
     let dialogRef = this.dialog.open(ConfirmModalComponent, {
       panelClass: 'edit-modal',
@@ -467,23 +449,6 @@ export class ViewTimesheetComponent implements OnInit, OnChanges, OnDestroy {
       }
     });
   }
-
-  // getAllActiveConsultants(filter: FilterCriteria): void {
-  //       // this.isLoading = true;
-  //       this.activeConsultantService.getAllActiveConsultants(filter).subscribe({
-  //         next: (response: HttpResponse<ActiveConsultant[]>) => {
-  //           if (response.status === 200) {
-  //             this.dataSource = response.body || [];
-  //             this.dataSource = this.dataSource.filter((timesheet: ActiveConsultant) => timesheet.poNo !== null);
-  //             // this.isLoading = false;
-  //           }
-  //         },
-  //         error: (err: any) => {
-  //           console.log(err);
-  //           // this.isLoading = false;
-  //         },
-  //       });
-  // }
 
   startRegenerationOfTimesheets(consultantData: GeneratedTimesheet): void {
     const requestPayload = {
@@ -508,21 +473,17 @@ export class ViewTimesheetComponent implements OnInit, OnChanges, OnDestroy {
                 next: (timesheetResponse: any) => {
                   if (timesheetResponse.status === 200) {
                     let poTimesheetTemplateData = timesheetResponse.body;
-
                     consultantdata.poTimesheetTemplateHeaderData = poTimesheetTemplateData.timesheetHeaderData;
                     consultantdata.poTimesheetTemplateFileName  = poTimesheetTemplateData.filename;
                     consultantdata.poTimesheetTemplateName  = poTimesheetTemplateData.templateName;
-
                     if(consultantdata.projectId){
                       this.ProjectService.getProjectById(consultantdata.projectId).subscribe({
                         next: (projectResponse: any) => {
                           if (projectResponse.status === 200) {
                             let endClientData = projectResponse.body;
-
                             consultantdata.endClientName = endClientData.endClients.name;
                             consultantdata.resPersonId = endClientData.responsiblePerson.id;
                             consultantdata.resPersonName = endClientData.responsiblePerson.firstName + ' ' + endClientData.responsiblePerson.lastName;
-
                             if (consultantData.pgConsultantId) {
                               this.consultantService.getConsultantById(consultantData.pgConsultantId).subscribe({
                                 next: (consultantResponse: any) => {
@@ -534,41 +495,21 @@ export class ViewTimesheetComponent implements OnInit, OnChanges, OnDestroy {
                                     consultantdata.clientEmail = consultantDataFromResponse.clientEmail;
                                     this.timesheetRegenerationFinalCall(requestPayload);
                                   }
-                                },
-                                error: (err: any) => {
-                                  console.error(err);
-                                },
+                                }, error: (err: any) => { console.error(err); },
                               });
-                            } else {
-                              this.toastr.error('Pg Consultant Id is empty');
-                            }
+                            } else { this.toastr.error('Pg Consultant Id is empty'); }
                           }
-                        },
-                        error: (err: any) => {
-                          console.error(err);
-                        },
+                        }, error: (err: any) => { console.error(err); },
                       })
-                    } else {
-                      this.toastr.error('Project Id is empty');
-                    }
+                    } else { this.toastr.error('Project Id is empty'); }
                   }
-                },
-                error: (err: any) => {
-                  console.error(err);
-                },
+                }, error: (err: any) => { console.error(err); },
               });
-            } else {
-              this.toastr.error('Po Timesheet Template Id is empty');
-            }
+            } else { this.toastr.error('Po Timesheet Template Id is empty'); }
           }
-        },
-        error: (err: any) => {
-          console.log(err);
-        },
+        }, error: (err: any) => { console.log(err); },
       });
-    } else {
-      this.toastr.error('Po Id is empty');
-    }
+    } else { this.toastr.error('Po Id is empty'); }
   }
 
   timesheetRegenerationFinalCall(requestPayload: any): void{
@@ -578,10 +519,7 @@ export class ViewTimesheetComponent implements OnInit, OnChanges, OnDestroy {
           console.log('Timesheets generation started successfully');
           this.closeSideBar(true);
         }
-      },
-      error: (err: any) => {
-        console.log(err);
-      },
+      }, error: (err: any) => { console.log(err); },
     });
   }
 
@@ -601,14 +539,12 @@ export class ViewTimesheetComponent implements OnInit, OnChanges, OnDestroy {
     } = data;
     return filteredData;
   }
-  /** Helper function to reset the accordions */
+
   private resetPanelStates(): void {
     const panelArray = this.panels.toArray();
     const key = this.timesheetData?.statuses?.statusKey;
     panelArray.forEach(panel => panel.expanded = false);
-
-    panelArray[0]!.expanded = true; //always close the first panel
-
+    panelArray[0]!.expanded = true;
     if (key === this.generated || key === this.tsdeleted || key === this.sent) {
       panelArray[1].expanded = true;
     }
@@ -617,7 +553,6 @@ export class ViewTimesheetComponent implements OnInit, OnChanges, OnDestroy {
     }
   }
 
-  /** Comments Module for the timesheet */
   getDataForComments(): void {
     this.userNameSub = this.authService.userName$.subscribe((userData: any) => {
       this.userName = userData?.name;
@@ -654,20 +589,12 @@ export class ViewTimesheetComponent implements OnInit, OnChanges, OnDestroy {
                   next: (data: any) => {
                     const blobUrl = URL.createObjectURL(data);
                     comment.userProfilePicUrl = blobUrl;
-                  },
-                  error: (err: any) => {
-                    console.log(err);
-                  },
+                  }, error: (err: any) => { console.log(err); },
                 });
-              console.log(comment.userProfilePicUrl);
             });
             this.comments = commentData;
-            console.log(this.comments);
           }
-        },
-        error: (err) => {
-          console.error(err);
-        },
+        }, error: (err) => { console.error(err); },
       });
   }
 
@@ -687,10 +614,7 @@ export class ViewTimesheetComponent implements OnInit, OnChanges, OnDestroy {
               this.toastr.success('Comment deleted successfully');
               this.getComments();
             }
-          },
-          error: (err) => {
-            console.error(err);
-          },
+          }, error: (err) => { console.error(err); },
         });
       }
     });
@@ -730,27 +654,20 @@ export class ViewTimesheetComponent implements OnInit, OnChanges, OnDestroy {
       }
     }, 190);
   }
-  /** Comments Module ends for the timesheet */
 
-  // Methods for inline status editing
   startEditingStatus(): void {
     this.editingStatus = true;
-    // Deep copy original status to avoid issues if cancel is hit after object modification
     this.originalStatus = JSON.parse(JSON.stringify(this.timesheetData?.statuses));
-
-    // Find the full status object from editableStatuses to ensure it's a reference to an object in that list
     this.selectedStatusInEdit = this.editableStatuses.find(
       (s) => s.statusKey === this.timesheetData?.statuses?.statusKey
-    ) || this.timesheetData?.statuses; // Fallback to current status if not in editable list (should be)
-
+    ) || this.timesheetData?.statuses;
     this.commentInEdit = this.timesheetData?.statuses?.reason || '';
   }
 
   cancelEditingStatus(): void {
     this.editingStatus = false;
-    this.selectedStatusInEdit = null; // Or reset to originalStatus if preferred
+    this.selectedStatusInEdit = null;
     this.commentInEdit = '';
-    // No need to revert this.timesheetData.statuses as it wasn't changed yet
   }
 
   onStatusSelectionChange(event: MatSelectChange): void {
@@ -766,9 +683,7 @@ export class ViewTimesheetComponent implements OnInit, OnChanges, OnDestroy {
       return;
     }
 
-    // If "TS Imported" (or the original status) is re-selected, treat as cancel or no-op
     if (this.selectedStatusInEdit.statusKey === this.originalStatus?.statusKey) {
-        // If status is TS_CORRECTION_REQUIRED and comment has changed, then proceed to save
         if (this.selectedStatusInEdit.statusKey === TimesheetStatus.correctionNeeded && this.commentInEdit !== (this.originalStatus?.reason || '')) {
             // Continue to save logic
         } else if (this.selectedStatusInEdit.statusKey !== TimesheetStatus.correctionNeeded) {
@@ -786,31 +701,25 @@ export class ViewTimesheetComponent implements OnInit, OnChanges, OnDestroy {
     }
 
     const payload: any = {
-      // id: this.originalStatus?.id, // The API uses timesheetId in URL, payload contains status details
       statusKey: this.selectedStatusInEdit.statusKey,
       statusGoodName: this.selectedStatusInEdit.statusGoodName,
-      datetime: new Date().toISOString(), // Ensure this is the format backend expects
+      datetime: new Date().toISOString(),
       reason: this.selectedStatusInEdit.statusKey === TimesheetStatus.correctionNeeded ? this.commentInEdit.trim() : null,
     };
 
-    // Prepare the new entry for statusHistory
     const newStatusHistoryEntry = {
-      // id: '', // Backend should generate this if it's a new DB entry for history
       statusKey: payload.statusKey,
       statusGoodName: payload.statusGoodName,
       datetime: payload.datetime,
       reason: payload.reason,
     };
 
-    // Construct the full status history to be sent
     const updatedStatusHistory = [...(this.originalStatus?.statusHistory || []), newStatusHistoryEntry];
     payload.statusHistory = updatedStatusHistory;
 
-    // Add the id of the status object to be updated, if your backend expects it for PATCH operations on a sub-document
     if (this.originalStatus?.id) {
         payload.id = this.originalStatus.id;
     }
-
 
     if (!this.timesheetData || !this.timesheetData.id) {
         this.toastr.error('Timesheet data is missing. Cannot save.');
@@ -819,9 +728,8 @@ export class ViewTimesheetComponent implements OnInit, OnChanges, OnDestroy {
 
     this.timesheetService.updateGeneratedTimesheetStatus(this.timesheetData.id, payload).subscribe({
       next: (response: any) => {
-        if (response.status === 204 || response.status === 200) { // 204 No Content is a common success for PATCH/PUT
+        if (response.status === 204 || response.status === 200) {
 
-          // Update local timesheetData.statuses
           if (this.timesheetData && this.timesheetData.statuses) {
             this.timesheetData.statuses.statusKey = payload.statusKey;
             this.timesheetData.statuses.statusGoodName = payload.statusGoodName;
@@ -829,19 +737,15 @@ export class ViewTimesheetComponent implements OnInit, OnChanges, OnDestroy {
             this.timesheetData.statuses.reason = payload.reason;
             this.timesheetData.statuses.statusHistory = updatedStatusHistory;
 
-            // Also update the importTimesheetData.currentStatus if it's linked to this
-            // This logic might need refinement based on how importTimesheetData.currentStatus is derived/used
             if (this.importTimesheetData && payload.statusKey === TimesheetStatus.correctionNeeded) {
                 this.importTimesheetData.currentStatus = 'CORRECTION REQUIRED';
             } else if (this.importTimesheetData && payload.statusGoodName?.includes('Approved')) {
                 this.importTimesheetData.currentStatus = 'APPROVED';
             } else if (this.importTimesheetData && payload.statusKey === TimesheetStatus.importedTimesheetMatched) {
-                this.importTimesheetData.currentStatus = 'TS IMPORTED'; // Or 'IMPORTED'
+                this.importTimesheetData.currentStatus = 'TS IMPORTED';
             }
-            // Potentially update other fields in importTimesheetData if necessary
           }
 
-          // Now, call updateImportedTimesheetStatus
           if (this.importTimesheetData && this.importTimesheetData.id) {
             this.timesheetService.updateImportedTimesheetStatus(this.importTimesheetData.id, this.selectedStatusInEdit.statusKey)
               .subscribe({
@@ -849,7 +753,6 @@ export class ViewTimesheetComponent implements OnInit, OnChanges, OnDestroy {
                   if (importStatusUpdateResponse.status === 204 || importStatusUpdateResponse.status === 200) {
                     this.toastr.success('Timesheet and import status updated successfully.');
                   } else {
-                    // Successful first call, but second call had an issue (though might not be an error status code)
                     this.toastr.warning('Timesheet status updated, but import status update returned an unexpected response.');
                   }
                   this.editingStatus = false;
@@ -857,18 +760,16 @@ export class ViewTimesheetComponent implements OnInit, OnChanges, OnDestroy {
                 },
                 error: (importErr) => {
                   console.error('Error updating imported timesheet status:', importErr);
-                  // First call succeeded, but this one failed.
                   this.toastr.error('Timesheet status updated, but failed to update import status.');
                   this.editingStatus = false;
-                  this.closeSideBar(true); // Still close sidebar as main operation succeeded.
+                  this.closeSideBar(true);
                 }
-                // Potentially update other fields in importTimesheetData if necessary
-            }
-
+              });
+          } else {
+            this.toastr.success('Timesheet status updated successfully. Import status not updated (missing data).');
+            this.editingStatus = false;
+            this.closeSideBar(true);
           }
-          this.editingStatus = false;
-          // Optionally, emit an event or refresh data from parent
-          this.closeSideBar(true); // Example: Reload data in parent component
         } else {
           this.toastr.error('Failed to update timesheet status. Unexpected response.');
         }
@@ -876,12 +777,7 @@ export class ViewTimesheetComponent implements OnInit, OnChanges, OnDestroy {
       error: (err) => {
         console.error('Error updating timesheet status:', err);
         this.toastr.error('An error occurred while updating status.');
-        // Decide if editingStatus should remain true or be cancelled
-        // this.cancelEditingStatus();
       }
     });
   }
-
-  // Remove or comment out the old saveStatus method if it's fully replaced
-  // saveStatus(): void { ... }
 }

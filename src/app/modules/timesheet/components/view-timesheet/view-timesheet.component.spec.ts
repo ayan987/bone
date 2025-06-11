@@ -18,6 +18,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { of, throwError } from 'rxjs';
 import { TimesheetStatus } from '../../../../models/timesheet-status-enum';
+import { HttpResponse } from '@angular/common/http';
 import { GeneratedTimesheet } from '../../../../models/generated-timesheet';
 import { By } from '@angular/platform-browser';
 
@@ -35,17 +36,19 @@ describe('ViewTimesheetComponent', () => {
 
   const mockGeneratedTimesheet: GeneratedTimesheet = {
     id: 'ts-123',
-    consultantId: 'consultant-1',
+    pgConsultantId: 'consultant-1', // Corrected from consultantId
     month: 1,
     year: 2024,
-    pgContractType: '',
-    pgContractId: '',
-    pgConsultantId: '',
+    labels: { labels: [] }, // Added missing property
+    endDateMonthYear: 'Jan 2024', // Added missing property
+    // pgContractType: '', // Removed as it's not in GeneratedTimesheet model
+    // pgContractId: '', // Removed as it's not in GeneratedTimesheet model
+    // pgConsultantId: '', // Removed duplicate, first one is used
     clientShortName: '',
-    clientId: '',
+    // clientId: '', // Removed as it's not in GeneratedTimesheet model
     projectName: '',
-    projectId: '',
-    poId: '',
+    // projectId: '', // Removed as it's not in GeneratedTimesheet model
+    // poId: '', // Removed as it's not in GeneratedTimesheet model
     poNo: '',
     abrufName: '',
     abrufId: '',
@@ -54,24 +57,23 @@ describe('ViewTimesheetComponent', () => {
       statusKey: TimesheetStatus.importedTimesheetMatched,
       statusGoodName: 'TS Imported',
       datetime: new Date().toISOString(),
-      statusHistory: []
+      statusHistory: [],
+      reason: null
     },
-    // Add other required properties of GeneratedTimesheet
+    // Ensure all other required fields from GeneratedTimesheet interface are present if any
   };
 
   const allStatusTemplates = [
     { statusKey: TimesheetStatus.importedTimesheetMatched, statusGoodName: 'TS Imported' },
-    { statusKey: 'TS_APR_1', statusGoodName: '1st lvl Approved' }, // Assuming TS_APR_1 is a real key
-    { statusKey: 'TS_APR_2', statusGoodName: '2nd lvl Approved' }, // Assuming TS_APR_2 is a real key
+    { statusKey: 'TS_APR_1', statusGoodName: '1st lvl Approved' },
+    { statusKey: 'TS_APR_2', statusGoodName: '2nd lvl Approved' },
     { statusKey: TimesheetStatus.correctionNeeded, statusGoodName: 'Correction Required' },
     { statusKey: 'TS_OTHER', statusGoodName: 'Other Status' },
   ];
 
-  // Mock for importTimesheetData as it's accessed in the template
   const mockImportTimesheetData = {
-    id: 'import-456', // Added ID for testing updateImportedTimesheetStatus
+    id: 'import-456',
     currentStatus: 'IMPORTED',
-    // ... other properties as needed by the template
   };
 
 
@@ -123,19 +125,16 @@ describe('ViewTimesheetComponent', () => {
 
     fixture = TestBed.createComponent(ViewTimesheetComponent);
     component = fixture.componentInstance;
-    component.timesheetData = JSON.parse(JSON.stringify(mockGeneratedTimesheet)); // Deep copy
-    // Initialize importTimesheetData as it's used in the template for status display
+    component.timesheetData = JSON.parse(JSON.stringify(mockGeneratedTimesheet));
     component.importTimesheetData = JSON.parse(JSON.stringify(mockImportTimesheetData));
-    // Ensure currentStatus in mockImportTimesheetData matches timesheetData for initial state consistency
     if (component.timesheetData && component.timesheetData.statuses) {
         component.importTimesheetData.currentStatus = component.timesheetData.statuses.statusGoodName;
     }
 
-
-    mockTimesheetService.getAllTimesheetStatusTemplates.and.returnValue(of({ status: 200, body: [...allStatusTemplates] }));
-    mockTimesheetService.getCommentByTimesheetId.and.returnValue(of({status: 200, body: []}));
-    mockTimesheetService.getImportTimesheetData.and.returnValue(of({ status: 200, body: { importHistory: [], statusHistory: [] } }));
-    mockTimesheetService.updateImportedTimesheetStatus.and.returnValue(of({ status: 204 })); // Default success for second call
+    mockTimesheetService.getAllTimesheetStatusTemplates.and.returnValue(of(new HttpResponse({ status: 200, body: [...allStatusTemplates] })));
+    mockTimesheetService.getCommentByTimesheetId.and.returnValue(of(new HttpResponse({status: 200, body: []})));
+    mockTimesheetService.getImportTimesheetData.and.returnValue(of(new HttpResponse({ status: 200, body: { importHistory: [], statusHistory: [] } })));
+    mockTimesheetService.updateImportedTimesheetStatus.and.returnValue(of(new HttpResponse({ status: 204 })));
 
 
     fixture.detectChanges();
@@ -148,25 +147,21 @@ describe('ViewTimesheetComponent', () => {
   describe('Inline Status Editing UI', () => {
     const getEditIcon = () => fixture.debugElement.query(By.css('mat-icon.ml-2.cursor-pointer'));
     const getStatusTextSpan = () => fixture.debugElement.query(By.css('ng-container[ngif="!editingStatus"] > span'));
-    // const getDropdown = () => fixture.debugElement.query(By.css('mat-select[formcontrolname="statusInEdit"]')); // formcontrolname might not be there
     const getDropdown = () => fixture.debugElement.query(By.css('mat-select'));
     const getCheckIcon = () => fixture.debugElement.query(By.css('mat-icon.text-green-500'));
     const getCancelIcon = () => fixture.debugElement.query(By.css('mat-icon.text-red-500'));
     const getCommentTextarea = () => fixture.debugElement.query(By.css('textarea[matInput]'));
 
     beforeEach(fakeAsync(() => {
-        // Ensure conditions are met for edit icon to be potentially visible
         component.timesheetData!.statuses!.statusKey = TimesheetStatus.importedTimesheetMatched;
         component.timesheetData!.statuses!.statusGoodName = 'TS Imported';
-        // Ensure importTimesheetData.currentStatus reflects the timesheetData's statusGoodName for consistency in the template
         if (component.importTimesheetData && component.timesheetData?.statuses?.statusGoodName) {
              component.importTimesheetData.currentStatus = component.timesheetData.statuses.statusGoodName.toUpperCase();
         }
 
-
         fixture.detectChanges();
-        component.ngOnInit(); // Make sure editableStatuses are loaded
-        tick(); // allow observables to complete
+        component.ngOnInit();
+        tick();
         fixture.detectChanges();
     }));
 
@@ -205,7 +200,6 @@ describe('ViewTimesheetComponent', () => {
 
         expect(component.startEditingStatus).toHaveBeenCalled();
         expect(component.editingStatus).toBeTrue();
-        // Use jasmine.objectContaining for originalStatus due to potential deep copy nuances
         expect(component.originalStatus).toEqual(jasmine.objectContaining(mockGeneratedTimesheet.statuses));
         expect(component.selectedStatusInEdit.statusKey).toBe(mockGeneratedTimesheet.statuses.statusKey);
         expect(getStatusTextSpan()).toBeNull();
@@ -235,11 +229,6 @@ describe('ViewTimesheetComponent', () => {
 
     describe('Dropdown Population and Interaction', () => {
         it('editableStatuses should be populated correctly including "TS Imported" and "Correction Required" by key', () => {
-            // Based on the component's ngOnInit logic:
-            // status.statusKey === TimesheetStatus.importedTimesheetMatched
-            // status.statusGoodName === '1st lvl Approved'
-            // status.statusGoodName === '2nd lvl Approved'
-            // status.statusKey === TimesheetStatus.correctionNeeded
             const expectedStatusKeysOrGoodNames = [
                 TimesheetStatus.importedTimesheetMatched,
                 '1st lvl Approved',
@@ -250,7 +239,7 @@ describe('ViewTimesheetComponent', () => {
             expectedStatusKeysOrGoodNames.forEach(val => {
                 expect(actualPresent).toContain(val);
             });
-            expect(component.editableStatuses.length).toBe(4); // Assuming no other statuses match these conditions
+            expect(component.editableStatuses.length).toBe(4);
         });
 
         it('onStatusSelectionChange should update selectedStatusInEdit and clear comment if not Correction Required', () => {
@@ -322,7 +311,7 @@ describe('ViewTimesheetComponent', () => {
             expect(mockToastrService.error).toHaveBeenCalledWith('Please select a status.');
         });
 
-        it('should call cancelEditingStatus if current status (TS Imported) is re-selected without changes to comment if it was TS_COR', () => {
+        it('should call cancelEditingStatus if current status (TS Imported) is re-selected without changes to comment if it was Correction Required', () => {
             spyOn(component, 'cancelEditingStatus').and.callThrough();
             component.selectedStatusInEdit = component.editableStatuses.find(s => s.statusKey === TimesheetStatus.importedTimesheetMatched);
             component.commentInEdit = component.originalStatus.reason || '';
@@ -338,9 +327,8 @@ describe('ViewTimesheetComponent', () => {
             component.selectedStatusInEdit = tsCorStatusObject;
             component.commentInEdit = 'New comment';
 
-            mockTimesheetService.updateGeneratedTimesheetStatus.and.returnValue(of({ status: 204 }));
-            // Assuming updateImportedTimesheetStatus will also be called and succeed
-            mockTimesheetService.updateImportedTimesheetStatus.and.returnValue(of({ status: 204 }));
+            mockTimesheetService.updateGeneratedTimesheetStatus.and.returnValue(of(new HttpResponse({ status: 204 })));
+            mockTimesheetService.updateImportedTimesheetStatus.and.returnValue(of(new HttpResponse({ status: 204 })));
             spyOn(component, 'closeSideBar');
 
             component.saveStatusAndStopEditing();
@@ -363,8 +351,8 @@ describe('ViewTimesheetComponent', () => {
 
         it('should call both services for new status (e.g., 1st lvl Approved) and show combined success', () => {
             component.selectedStatusInEdit = component.editableStatuses.find(s => s.statusKey === 'TS_APR_1');
-            mockTimesheetService.updateGeneratedTimesheetStatus.and.returnValue(of({ status: 204 }));
-            mockTimesheetService.updateImportedTimesheetStatus.and.returnValue(of({ status: 204 }));
+            mockTimesheetService.updateGeneratedTimesheetStatus.and.returnValue(of(new HttpResponse({ status: 204 })));
+            mockTimesheetService.updateImportedTimesheetStatus.and.returnValue(of(new HttpResponse({ status: 204 })));
             spyOn(component, 'closeSideBar');
 
             component.saveStatusAndStopEditing();
@@ -388,8 +376,8 @@ describe('ViewTimesheetComponent', () => {
         it('should call both services for Correction Required with comment and show combined success', () => {
             component.selectedStatusInEdit = component.editableStatuses.find(s => s.statusKey === TimesheetStatus.correctionNeeded);
             component.commentInEdit = 'Detailed correction info';
-            mockTimesheetService.updateGeneratedTimesheetStatus.and.returnValue(of({ status: 204 }));
-            mockTimesheetService.updateImportedTimesheetStatus.and.returnValue(of({ status: 204 }));
+            mockTimesheetService.updateGeneratedTimesheetStatus.and.returnValue(of(new HttpResponse({ status: 204 })));
+            mockTimesheetService.updateImportedTimesheetStatus.and.returnValue(of(new HttpResponse({ status: 204 })));
             spyOn(component, 'closeSideBar');
 
             component.saveStatusAndStopEditing();
@@ -414,7 +402,7 @@ describe('ViewTimesheetComponent', () => {
         it('should handle error from first API call (updateGeneratedTimesheetStatus) and remain in edit mode', () => {
             component.selectedStatusInEdit = component.editableStatuses.find(s => s.statusKey === 'TS_APR_1');
             mockTimesheetService.updateGeneratedTimesheetStatus.and.returnValue(throwError(() => new Error('API Down')));
-            spyOn(component, 'cancelEditingStatus'); // To check if it's NOT called implicitly by error handling
+            spyOn(component, 'cancelEditingStatus');
 
             component.saveStatusAndStopEditing();
 
@@ -425,21 +413,21 @@ describe('ViewTimesheetComponent', () => {
 
         it('should handle error from second API call (updateImportedTimesheetStatus) and show specific error', () => {
             component.selectedStatusInEdit = component.editableStatuses.find(s => s.statusKey === 'TS_APR_1');
-            mockTimesheetService.updateGeneratedTimesheetStatus.and.returnValue(of({ status: 204 }));
+            mockTimesheetService.updateGeneratedTimesheetStatus.and.returnValue(of(new HttpResponse({ status: 204 })));
             mockTimesheetService.updateImportedTimesheetStatus.and.returnValue(throwError(() => new Error('Import Update Failed')));
             spyOn(component, 'closeSideBar');
 
             component.saveStatusAndStopEditing();
 
             expect(mockToastrService.error).toHaveBeenCalledWith('Timesheet status updated, but failed to update import status.');
-            expect(component.editingStatus).toBeFalse(); // Still exits edit mode as main operation succeeded
+            expect(component.editingStatus).toBeFalse();
             expect(component.closeSideBar).toHaveBeenCalledWith(true);
         });
 
         it('should handle unexpected response from second API call (updateImportedTimesheetStatus)', () => {
             component.selectedStatusInEdit = component.editableStatuses.find(s => s.statusKey === 'TS_APR_1');
-            mockTimesheetService.updateGeneratedTimesheetStatus.and.returnValue(of({ status: 204 }));
-            mockTimesheetService.updateImportedTimesheetStatus.and.returnValue(of({ status: 201 })); // Unexpected success code
+            mockTimesheetService.updateGeneratedTimesheetStatus.and.returnValue(of(new HttpResponse({ status: 204 })));
+            mockTimesheetService.updateImportedTimesheetStatus.and.returnValue(of(new HttpResponse({ status: 201 })));
             spyOn(component, 'closeSideBar');
 
             component.saveStatusAndStopEditing();
@@ -451,8 +439,8 @@ describe('ViewTimesheetComponent', () => {
 
         it('should handle missing importTimesheetData.id for the second API call', () => {
             component.selectedStatusInEdit = component.editableStatuses.find(s => s.statusKey === 'TS_APR_1');
-            mockTimesheetService.updateGeneratedTimesheetStatus.and.returnValue(of({ status: 204 }));
-            component.importTimesheetData.id = null; // Simulate missing ID
+            mockTimesheetService.updateGeneratedTimesheetStatus.and.returnValue(of(new HttpResponse({ status: 204 })));
+            component.importTimesheetData.id = null;
             spyOn(component, 'closeSideBar');
 
             component.saveStatusAndStopEditing();
@@ -466,10 +454,10 @@ describe('ViewTimesheetComponent', () => {
 
         it('should update importTimesheetData.currentStatus on successful save for approved status (both calls succeed)', fakeAsync(() => {
             component.selectedStatusInEdit = component.editableStatuses.find(s => s.statusKey === 'TS_APR_1');
-            mockTimesheetService.updateGeneratedTimesheetStatus.and.returnValue(of({ status: 204 }));
-            mockTimesheetService.updateImportedTimesheetStatus.and.returnValue(of({ status: 204 }));
+            mockTimesheetService.updateGeneratedTimesheetStatus.and.returnValue(of(new HttpResponse({ status: 204 })));
+            mockTimesheetService.updateImportedTimesheetStatus.and.returnValue(of(new HttpResponse({ status: 204 })));
             component.saveStatusAndStopEditing();
-            tick(); // for all async operations to complete
+            tick();
             fixture.detectChanges();
             expect(component.importTimesheetData.currentStatus).toBe('APPROVED');
         }));
@@ -477,10 +465,10 @@ describe('ViewTimesheetComponent', () => {
         it('should update importTimesheetData.currentStatus on successful save for correction required status (both calls succeed)', fakeAsync(() => {
             component.selectedStatusInEdit = component.editableStatuses.find(s => s.statusKey === TimesheetStatus.correctionNeeded);
             component.commentInEdit = "Needs fix";
-            mockTimesheetService.updateGeneratedTimesheetStatus.and.returnValue(of({ status: 204 }));
-            mockTimesheetService.updateImportedTimesheetStatus.and.returnValue(of({ status: 204 }));
+            mockTimesheetService.updateGeneratedTimesheetStatus.and.returnValue(of(new HttpResponse({ status: 204 })));
+            mockTimesheetService.updateImportedTimesheetStatus.and.returnValue(of(new HttpResponse({ status: 204 })));
             component.saveStatusAndStopEditing();
-            tick(); // for all async operations to complete
+            tick();
             fixture.detectChanges();
             expect(component.importTimesheetData.currentStatus).toBe('CORRECTION REQUIRED');
         }));
@@ -495,10 +483,9 @@ describe('ViewTimesheetComponent', () => {
             expect(component.editingStatus).toBeTrue();
             spyOn(component, 'cancelEditingStatus').and.callThrough();
 
-            // Ensure the mock returns a successful response that would cause the `next` block to execute
-            mockTimesheetService.getImportTimesheetData.and.returnValue(of({ status: 200, body: { importHistory: [], statusHistory: [], currentStatus: 'NEW_STATUS' } }));
+            mockTimesheetService.getImportTimesheetData.and.returnValue(of(new HttpResponse({ status: 200, body: { importHistory: [], statusHistory: [], currentStatus: 'NEW_STATUS' } })));
             component.getImportTimesheetData('checksum-123');
-            tick(); // allow observables to complete
+            tick();
 
             expect(component.cancelEditingStatus).toHaveBeenCalled();
             expect(component.editingStatus).toBeFalse();
@@ -510,13 +497,12 @@ describe('ViewTimesheetComponent', () => {
             tick();
             spyOn(component, 'cancelEditingStatus').and.callThrough();
 
-            mockTimesheetService.getImportTimesheetData.and.returnValue(of({ status: 200, body: { importHistory: [], statusHistory: [] } }));
+            mockTimesheetService.getImportTimesheetData.and.returnValue(of(new HttpResponse({ status: 200, body: { importHistory: [], statusHistory: [] } })));
             component.getImportTimesheetData('checksum-123');
             tick();
 
             expect(component.cancelEditingStatus).not.toHaveBeenCalled();
         }));
     });
-
   });
 });

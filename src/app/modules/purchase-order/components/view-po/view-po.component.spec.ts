@@ -3,7 +3,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ViewPoComponent } from './view-po.component';
 import { HttpClientModule } from '@angular/common/http';
 import { RouterModule } from '@angular/router';
-import { CustomDateFormatPipe } from '../../../../customDate-pipe';
+import { CustomDateFormatPipe } from '../../../../pipes/customDate-pipe';
 import { CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { MatDialogRef } from '@angular/material/dialog';
 
