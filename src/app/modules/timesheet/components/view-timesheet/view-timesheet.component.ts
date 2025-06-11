@@ -611,7 +611,7 @@ export class ViewTimesheetComponent implements OnInit, OnChanges, OnDestroy {
             });
             this.comments = commentData;
           }
-        }, error: (err) => { console.error(err); },
+        }, error: (err: any) => { console.error(err); },
       });
   }
 
@@ -631,7 +631,7 @@ export class ViewTimesheetComponent implements OnInit, OnChanges, OnDestroy {
               this.toastr.success('Comment deleted successfully');
               this.getComments();
             }
-          }, error: (err) => { console.error(err); },
+          }, error: (err: any) => { console.error(err); },
         });
       }
     });
@@ -777,7 +777,7 @@ export class ViewTimesheetComponent implements OnInit, OnChanges, OnDestroy {
                 },
                 error: (importErr) => {
                   console.error('Error updating imported timesheet status:', importErr);
-                  // this.toastr.error('Timesheet status updated, but failed to update import status.');
+                  this.toastr.error('Timesheet status updated, but failed to update import status.');
                   this.editingStatus = false;
                   this.closeSideBar(true);
                 }

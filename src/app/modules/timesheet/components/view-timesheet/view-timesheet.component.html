@@ -144,7 +144,7 @@
                 <span>{{importTimesheetData?.currentStatus | titlecase}}</span>
                 <mat-icon
                   *ngIf="!editingStatus && (timesheetData?.statuses?.statusKey === importedTimesheetMatched || timesheetData?.statuses?.statusKey === correctionNeeded || (approvedLvl1Key && timesheetData?.statuses?.statusKey === approvedLvl1Key) || (approvedLvl2Key && timesheetData?.statuses?.statusKey === approvedLvl2Key))"
-                  class="ml-2 cursor-pointer text-gray-600 hover:text-gray-800 align-middle"
+                  class="ml-2 cursor-pointer text-green-600 hover:text-green-700 align-middle"
                   (click)="startEditingStatus()" matTooltip="Edit status">edit</mat-icon>
               </ng-container>
 
