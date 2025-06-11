@@ -112,7 +112,6 @@ export class ViewTimesheetComponent implements OnInit, OnChanges, OnDestroy {
   sent = TimesheetStatus.sent;
   unmatched = TimesheetStatus.importedTimesheetUnmatched;
   importedTimesheetMatched = TimesheetStatus.importedTimesheetMatched; // This is 'TS_IMPORT_MATCHED'
-  impotedTimesheet = TimesheetStatus.imported;
 
   importTimesheetData: any = [];
   importTimesheetHistory: ImportHistoryItem[] = [];
@@ -175,7 +174,6 @@ export class ViewTimesheetComponent implements OnInit, OnChanges, OnDestroy {
           }
 
           this.editableStatuses = allStatuses.filter((status: any) =>
-            status.statusKey === TimesheetStatus.imported ||
             status.statusKey === TimesheetStatus.importedTimesheetMatched ||
             status.statusGoodName === '1st lvl Approved' ||
             status.statusGoodName === '2nd lvl Approved' ||
@@ -613,7 +611,7 @@ export class ViewTimesheetComponent implements OnInit, OnChanges, OnDestroy {
             });
             this.comments = commentData;
           }
-        }, error: (err) => { console.error(err); },
+        }, error: (err: any) => { console.error(err); },
       });
   }
 
@@ -633,7 +631,7 @@ export class ViewTimesheetComponent implements OnInit, OnChanges, OnDestroy {
               this.toastr.success('Comment deleted successfully');
               this.getComments();
             }
-          }, error: (err) => { console.error(err); },
+          }, error: (err: any) => { console.error(err); },
         });
       }
     });
@@ -766,7 +764,16 @@ export class ViewTimesheetComponent implements OnInit, OnChanges, OnDestroy {
           }
 
           if (this.importTimesheetData && this.importTimesheetData.id) {
-            this.timesheetService.updateImportedTimesheetStatus(this.importTimesheetData.id, this.selectedStatusInEdit.statusKey)
+            let statusKeyForImportService = this.selectedStatusInEdit.statusKey; // Default to original key
+
+            if (this.selectedStatusInEdit.statusKey === this.importedTimesheetMatched) {
+              statusKeyForImportService = 'IMPORTED'; // Specific mapping for "TS Imported"
+            }
+            // TODO: Ask user if other statuses like TS_CORRECTION_REQUIRED, TS_APPROVED_LVL_1, etc.,
+            // also need mapping for the updateImportedTimesheetStatus service.
+            // For now, only TS_IMPORT_MATCHED is mapped.
+
+            this.timesheetService.updateImportedTimesheetStatus(this.importTimesheetData.id, statusKeyForImportService)
               .subscribe({
                 next: (importStatusUpdateResponse: any) => {
                   if (importStatusUpdateResponse.status === 204 || importStatusUpdateResponse.status === 200) {
@@ -779,7 +786,7 @@ export class ViewTimesheetComponent implements OnInit, OnChanges, OnDestroy {
                 },
                 error: (importErr) => {
                   console.error('Error updating imported timesheet status:', importErr);
-                  // this.toastr.error('Timesheet status updated, but failed to update import status.');
+                  this.toastr.error('Timesheet status updated, but failed to update import status.');
                   this.editingStatus = false;
                   this.closeSideBar(true);
                 }

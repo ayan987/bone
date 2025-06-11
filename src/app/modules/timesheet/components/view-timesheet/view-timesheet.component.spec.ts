@@ -36,19 +36,13 @@ describe('ViewTimesheetComponent', () => {
 
   const mockGeneratedTimesheet: GeneratedTimesheet = {
     id: 'ts-123',
-    pgConsultantId: 'consultant-1', // Corrected from consultantId
+    pgConsultantId: 'consultant-1',
     month: 1,
     year: 2024,
-    labels: { labels: [] }, // Added missing property
-    endDateMonthYear: 'Jan 2024', // Added missing property
-    // pgContractType: '', // Removed as it's not in GeneratedTimesheet model
-    // pgContractId: '', // Removed as it's not in GeneratedTimesheet model
-    // pgConsultantId: '', // Removed duplicate, first one is used
+    labels: { labels: [] },
+    endDateMonthYear: 'Jan 2024',
     clientShortName: '',
-    // clientId: '', // Removed as it's not in GeneratedTimesheet model
     projectName: '',
-    // projectId: '', // Removed as it's not in GeneratedTimesheet model
-    // poId: '', // Removed as it's not in GeneratedTimesheet model
     poNo: '',
     abrufName: '',
     abrufId: '',
@@ -60,7 +54,6 @@ describe('ViewTimesheetComponent', () => {
       statusHistory: [],
       reason: null
     },
-    // Ensure all other required fields from GeneratedTimesheet interface are present if any
   };
 
   const allStatusTemplates = [
@@ -137,7 +130,7 @@ describe('ViewTimesheetComponent', () => {
     mockTimesheetService.updateImportedTimesheetStatus.and.returnValue(of(new HttpResponse({ status: 204 })));
 
 
-    fixture.detectChanges();
+    fixture.detectChanges(); // This calls ngOnInit initially
   });
 
   it('should create', () => {
@@ -146,12 +139,8 @@ describe('ViewTimesheetComponent', () => {
 
   describe('ngOnInit', () => {
     it('should assign approvedLvl1Key and approvedLvl2Key from fetched statuses', fakeAsync(() => {
-      // ngOnInit is called in the main beforeEach -> fixture.detectChanges() which calls it once.
-      // For this test, we want to control the specific mock response for getAllTimesheetStatusTemplates
-      // if it wasn't already done, or re-trigger ngOnInit if needed.
-      // However, the main beforeEach already calls it.
+      // ngOnInit is called in the main beforeEach -> fixture.detectChanges()
       tick(); // Ensure async operations from ngOnInit complete
-
       expect(component.approvedLvl1Key).toBe('TS_APV_L1');
       expect(component.approvedLvl2Key).toBe('TS_APV_L2');
     }));
@@ -161,10 +150,11 @@ describe('ViewTimesheetComponent', () => {
         { statusKey: TimesheetStatus.importedTimesheetMatched, statusGoodName: 'TS Imported' },
         { statusKey: TimesheetStatus.correctionNeeded, statusGoodName: 'Correction Required' },
       ];
+      // Override the default mock for this specific test
       mockTimesheetService.getAllTimesheetStatusTemplates.and.returnValue(of(new HttpResponse({ status: 200, body: incompleteStatuses })));
       spyOn(console, 'warn');
 
-      component.ngOnInit(); // Re-trigger with new mock
+      component.ngOnInit(); // Re-trigger ngOnInit with the new mock setup for this test
       tick();
 
       expect(component.approvedLvl1Key).toBeUndefined();
@@ -188,18 +178,17 @@ describe('ViewTimesheetComponent', () => {
         if (component.importTimesheetData && component.timesheetData?.statuses?.statusGoodName) {
              component.importTimesheetData.currentStatus = component.timesheetData.statuses.statusGoodName.toUpperCase();
         }
-
-        fixture.detectChanges();
-        component.ngOnInit();
+        // ngOnInit is already called by the main beforeEach's fixture.detectChanges()
+        // We call tick here to ensure any async operations from that ngOnInit are settled.
         tick();
         fixture.detectChanges();
     }));
 
     describe('Edit Icon Visibility', () => {
-      it('should show edit icon on hover when conditions are met', () => {
+      it('should show edit icon on hover when status is importedTimesheetMatched', () => {
         component.isStatusHovered = true;
         fixture.detectChanges();
-        expect(getEditIcon()).toBeTruthy(); // For TS_IMPORT_MATCHED
+        expect(getEditIcon()).toBeTruthy();
       });
 
       it('should show edit icon for correctionNeeded status when hovered', fakeAsync(() => {
@@ -211,7 +200,7 @@ describe('ViewTimesheetComponent', () => {
       }));
 
       it('should show edit icon for 1st lvl Approved status when hovered and key is set', fakeAsync(() => {
-        component.approvedLvl1Key = 'TS_APV_L1'; // ngOnInit should have set this
+        component.approvedLvl1Key = 'TS_APV_L1';
         component.timesheetData!.statuses!.statusKey = 'TS_APV_L1';
         component.isStatusHovered = true;
         fixture.detectChanges();
@@ -220,7 +209,7 @@ describe('ViewTimesheetComponent', () => {
       }));
 
       it('should show edit icon for 2nd lvl Approved status when hovered and key is set', fakeAsync(() => {
-        component.approvedLvl2Key = 'TS_APV_L2'; // ngOnInit should have set this
+        component.approvedLvl2Key = 'TS_APV_L2';
         component.timesheetData!.statuses!.statusKey = 'TS_APV_L2';
         component.isStatusHovered = true;
         fixture.detectChanges();
@@ -242,14 +231,13 @@ describe('ViewTimesheetComponent', () => {
       });
 
       it('should hide edit icon if approvedLvl1Key is undefined and status matches expected Lvl1 key', fakeAsync(() => {
-        component.approvedLvl1Key = undefined; // Simulate key not found
-        component.timesheetData!.statuses!.statusKey = 'TS_APV_L1'; // This is the key we'd expect
+        component.approvedLvl1Key = undefined;
+        component.timesheetData!.statuses!.statusKey = 'TS_APV_L1';
         component.isStatusHovered = true;
         fixture.detectChanges();
         tick();
         expect(getEditIcon()).toBeNull();
       }));
-
     });
 
     describe('Edit Mode Toggling and UI State', () => {
@@ -313,13 +301,13 @@ describe('ViewTimesheetComponent', () => {
             component.commentInEdit = 'A comment';
             fixture.detectChanges();
 
-            const apr1Status = component.editableStatuses.find(s => s.statusKey === 'TS_APR_1');
-            expect(apr1Status).toBeDefined("'TS_APR_1' status should exist in editableStatuses");
+            const apr1Status = component.editableStatuses.find(s => s.statusKey === 'TS_APV_L1');
+            expect(apr1Status).toBeDefined("'TS_APV_L1' status should exist in editableStatuses");
 
             component.onStatusSelectionChange({ value: apr1Status } as any);
             fixture.detectChanges();
 
-            expect(component.selectedStatusInEdit.statusKey).toBe('TS_APR_1');
+            expect(component.selectedStatusInEdit.statusKey).toBe('TS_APV_L1');
             expect(component.commentInEdit).toBe('');
         });
 
@@ -327,7 +315,7 @@ describe('ViewTimesheetComponent', () => {
             component.startEditingStatus();
             fixture.detectChanges();
 
-            component.selectedStatusInEdit = component.editableStatuses.find(s => s.statusKey === 'TS_APR_1');
+            component.selectedStatusInEdit = component.editableStatuses.find(s => s.statusKey === 'TS_APV_L1');
             component.commentInEdit = "Initial Comment";
             fixture.detectChanges();
 
@@ -357,7 +345,7 @@ describe('ViewTimesheetComponent', () => {
             component.startEditingStatus();
             fixture.detectChanges();
             tick();
-            component.selectedStatusInEdit = component.editableStatuses.find(s => s.statusKey === 'TS_APR_1');
+            component.selectedStatusInEdit = component.editableStatuses.find(s => s.statusKey === 'TS_APV_L1');
             fixture.detectChanges();
             tick();
             expect(getCommentTextarea()).toBeNull();
@@ -415,8 +403,8 @@ describe('ViewTimesheetComponent', () => {
             expect(mockTimesheetService.updateGeneratedTimesheetStatus).not.toHaveBeenCalled();
         });
 
-        it('should call both services for new status (e.g., 1st lvl Approved) and show combined success', () => {
-            component.selectedStatusInEdit = component.editableStatuses.find(s => s.statusKey === 'TS_APR_1');
+        it('should call both services for new status (e.g., 1st lvl Approved with TS_APV_L1 key) and show combined success', () => {
+            component.selectedStatusInEdit = component.editableStatuses.find(s => s.statusKey === 'TS_APV_L1'); // Use the mock key
             mockTimesheetService.updateGeneratedTimesheetStatus.and.returnValue(of(new HttpResponse({ status: 204 })));
             mockTimesheetService.updateImportedTimesheetStatus.and.returnValue(of(new HttpResponse({ status: 204 })));
             spyOn(component, 'closeSideBar');
@@ -425,19 +413,37 @@ describe('ViewTimesheetComponent', () => {
 
             const expectedGeneratedPayload = {
                 id: component.originalStatus.id,
-                statusKey: 'TS_APR_1',
+                statusKey: 'TS_APV_L1',
                 statusGoodName: '1st lvl Approved',
                 datetime: jasmine.any(String),
                 reason: null,
-                statusHistory: jasmine.arrayContaining([jasmine.objectContaining({statusKey: 'TS_APR_1'})])
+                statusHistory: jasmine.arrayContaining([jasmine.objectContaining({statusKey: 'TS_APV_L1'})])
             };
             expect(mockTimesheetService.updateGeneratedTimesheetStatus).toHaveBeenCalledWith(component.timesheetData!.id, jasmine.objectContaining(expectedGeneratedPayload));
-            expect(mockTimesheetService.updateImportedTimesheetStatus).toHaveBeenCalledWith(component.importTimesheetData.id, 'TS_APR_1');
+            expect(mockTimesheetService.updateImportedTimesheetStatus).toHaveBeenCalledWith(component.importTimesheetData.id, 'TS_APV_L1');
             expect(mockToastrService.success).toHaveBeenCalledWith('Timesheet and import status updated successfully.');
             expect(component.editingStatus).toBeFalse();
-            expect(component.timesheetData?.statuses?.statusKey).toBe('TS_APR_1');
+            expect(component.timesheetData?.statuses?.statusKey).toBe('TS_APV_L1');
             expect(component.closeSideBar).toHaveBeenCalledWith(true);
         });
+
+        it('should call updateImportedTimesheetStatus with "IMPORTED" when selected status is importedTimesheetMatched', () => {
+            component.selectedStatusInEdit = component.editableStatuses.find(s => s.statusKey === TimesheetStatus.importedTimesheetMatched);
+            // This scenario implies no actual change, so saveStatusAndStopEditing might call cancelEditingStatus.
+            // However, if it were to proceed to save (e.g. comment changed for a status that allows it),
+            // we want to check the key used for the import service.
+            // Forcing a save by making it seem like a different status initially:
+            component.originalStatus.statusKey = 'SOME_OTHER_KEY_TO_FORCE_SAVE';
+
+            mockTimesheetService.updateGeneratedTimesheetStatus.and.returnValue(of(new HttpResponse({ status: 204 })));
+            mockTimesheetService.updateImportedTimesheetStatus.and.returnValue(of(new HttpResponse({ status: 204 })));
+            spyOn(component, 'closeSideBar');
+
+            component.saveStatusAndStopEditing();
+
+            expect(mockTimesheetService.updateImportedTimesheetStatus).toHaveBeenCalledWith(component.importTimesheetData.id, 'IMPORTED');
+        });
+
 
         it('should call both services for Correction Required with comment and show combined success', () => {
             component.selectedStatusInEdit = component.editableStatuses.find(s => s.statusKey === TimesheetStatus.correctionNeeded);
@@ -466,7 +472,7 @@ describe('ViewTimesheetComponent', () => {
         });
 
         it('should handle error from first API call (updateGeneratedTimesheetStatus) and remain in edit mode', () => {
-            component.selectedStatusInEdit = component.editableStatuses.find(s => s.statusKey === 'TS_APR_1');
+            component.selectedStatusInEdit = component.editableStatuses.find(s => s.statusKey === 'TS_APV_L1'); // Use mock key
             mockTimesheetService.updateGeneratedTimesheetStatus.and.returnValue(throwError(() => new Error('API Down')));
             spyOn(component, 'cancelEditingStatus');
 
@@ -478,7 +484,7 @@ describe('ViewTimesheetComponent', () => {
         });
 
         it('should handle error from second API call (updateImportedTimesheetStatus) and show specific error', () => {
-            component.selectedStatusInEdit = component.editableStatuses.find(s => s.statusKey === 'TS_APR_1');
+            component.selectedStatusInEdit = component.editableStatuses.find(s => s.statusKey === 'TS_APV_L1'); // Use mock key
             mockTimesheetService.updateGeneratedTimesheetStatus.and.returnValue(of(new HttpResponse({ status: 204 })));
             mockTimesheetService.updateImportedTimesheetStatus.and.returnValue(throwError(() => new Error('Import Update Failed')));
             spyOn(component, 'closeSideBar');
@@ -491,7 +497,7 @@ describe('ViewTimesheetComponent', () => {
         });
 
         it('should handle unexpected response from second API call (updateImportedTimesheetStatus)', () => {
-            component.selectedStatusInEdit = component.editableStatuses.find(s => s.statusKey === 'TS_APR_1');
+            component.selectedStatusInEdit = component.editableStatuses.find(s => s.statusKey === 'TS_APV_L1'); // Use mock key
             mockTimesheetService.updateGeneratedTimesheetStatus.and.returnValue(of(new HttpResponse({ status: 204 })));
             mockTimesheetService.updateImportedTimesheetStatus.and.returnValue(of(new HttpResponse({ status: 201 })));
             spyOn(component, 'closeSideBar');
@@ -504,7 +510,7 @@ describe('ViewTimesheetComponent', () => {
         });
 
         it('should show warning toast if updateImportedTimesheetStatus returns a service-generated error (e.g. 500 response)', () => {
-          component.selectedStatusInEdit = component.editableStatuses.find(s => s.statusKey === 'TS_APR_1');
+          component.selectedStatusInEdit = component.editableStatuses.find(s => s.statusKey === 'TS_APV_L1'); // Use mock key
           mockTimesheetService.updateGeneratedTimesheetStatus.and.returnValue(of(new HttpResponse({ status: 204 })));
           mockTimesheetService.updateImportedTimesheetStatus.and.returnValue(of(new HttpResponse({ status: 500, statusText: 'Unexpected null response from HTTP call mapping', body: null })));
           spyOn(component, 'closeSideBar');
@@ -517,7 +523,7 @@ describe('ViewTimesheetComponent', () => {
         });
 
         it('should handle missing importTimesheetData.id for the second API call', () => {
-            component.selectedStatusInEdit = component.editableStatuses.find(s => s.statusKey === 'TS_APR_1');
+            component.selectedStatusInEdit = component.editableStatuses.find(s => s.statusKey === 'TS_APV_L1'); // Use mock key
             mockTimesheetService.updateGeneratedTimesheetStatus.and.returnValue(of(new HttpResponse({ status: 204 })));
             component.importTimesheetData.id = null;
             spyOn(component, 'closeSideBar');
@@ -532,7 +538,7 @@ describe('ViewTimesheetComponent', () => {
 
 
         it('should update importTimesheetData.currentStatus on successful save for approved status (both calls succeed)', fakeAsync(() => {
-            component.selectedStatusInEdit = component.editableStatuses.find(s => s.statusKey === 'TS_APR_1');
+            component.selectedStatusInEdit = component.editableStatuses.find(s => s.statusKey === 'TS_APV_L1'); // Use mock key
             mockTimesheetService.updateGeneratedTimesheetStatus.and.returnValue(of(new HttpResponse({ status: 204 })));
             mockTimesheetService.updateImportedTimesheetStatus.and.returnValue(of(new HttpResponse({ status: 204 })));
             component.saveStatusAndStopEditing();
