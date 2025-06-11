@@ -140,12 +140,12 @@
               (mouseenter)="isStatusHovered = true"
               (mouseleave)="isStatusHovered = false"
               class="relative rounded-sm font-semibold flex items-center gap-2"
-              [ngClass]="{'generated': importTimesheetData?.currentStatus === 'IMPORTED', 'error': importTimesheetData?.currentStatus === 'UNMATCHED'}">
+              [ngClass]="timesheetData?.statuses?.statusKey | statusToColor">
 
               <ng-container *ngIf="!editingStatus">
-                <span>{{importTimesheetData?.currentStatus | titlecase}}</span>
+                <span>{{ timesheetData?.statuses?.statusGoodName }}</span>
                 <mat-icon
-                  *ngIf="isStatusHovered && !editingStatus && (timesheetData?.statuses?.statusKey === importedTimesheetMatched || timesheetData?.statuses?.statusKey === correctionNeeded || (approvedLvl1Key && timesheetData?.statuses?.statusKey === approvedLvl1Key) || (approvedLvl2Key && timesheetData?.statuses?.statusKey === approvedLvl2Key))"
+                  *ngIf="!editingStatus && isCurrentStatusEditable"
                   class="ml-2 cursor-pointer text-green-600 hover:text-green-700 align-middle"
                   (click)="startEditingStatus()" matTooltip="Edit status">edit</mat-icon>
               </ng-container>

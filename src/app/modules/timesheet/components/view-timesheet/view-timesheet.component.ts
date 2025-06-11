@@ -179,6 +179,11 @@ export class ViewTimesheetComponent implements OnInit, OnChanges, OnDestroy {
             status.statusGoodName === '2nd lvl Approved' ||
             status.statusKey === TimesheetStatus.correctionNeeded
           );
+
+          console.log('ViewTS Init - importedTimesheetMatched:', this.importedTimesheetMatched);
+          console.log('ViewTS Init - correctionNeeded:', this.correctionNeeded);
+          console.log('ViewTS Init - approvedLvl1Key:', this.approvedLvl1Key);
+          console.log('ViewTS Init - approvedLvl2Key:', this.approvedLvl2Key);
         }
       },
       error: (err) => {
@@ -206,6 +211,7 @@ export class ViewTimesheetComponent implements OnInit, OnChanges, OnDestroy {
           this.timesheetData?.year
         ),
       });
+      console.log('ViewTS ngOnChanges - timesheetData.statuses:', this.timesheetData.statuses);
     }
   }
 
@@ -805,5 +811,29 @@ export class ViewTimesheetComponent implements OnInit, OnChanges, OnDestroy {
         this.toastr.error('An error occurred while updating status.');
       }
     });
+  }
+
+  public get isCurrentStatusEditable(): boolean {
+    const currentStatusKey = this.timesheetData?.statuses?.statusKey;
+    if (!currentStatusKey) {
+      // console.log('isCurrentStatusEditable: currentStatusKey is missing', currentStatusKey);
+      return false;
+    }
+
+    const isEditable =
+      currentStatusKey === this.importedTimesheetMatched ||
+      currentStatusKey === this.correctionNeeded ||
+      (this.approvedLvl1Key && currentStatusKey === this.approvedLvl1Key) ||
+      (this.approvedLvl2Key && currentStatusKey === this.approvedLvl2Key);
+
+    // console.log('isCurrentStatusEditable check:', {
+    //   currentStatusKey,
+    //   importedTimesheetMatched: this.importedTimesheetMatched,
+    //   correctionNeeded: this.correctionNeeded,
+    //   approvedLvl1Key: this.approvedLvl1Key,
+    //   approvedLvl2Key: this.approvedLvl2Key,
+    //   isEditable
+    // });
+    return isEditable;
   }
 }
