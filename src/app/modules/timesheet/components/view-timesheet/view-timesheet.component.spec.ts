@@ -437,6 +437,19 @@ describe('ViewTimesheetComponent', () => {
             expect(component.closeSideBar).toHaveBeenCalledWith(true);
         });
 
+        it('should show warning toast if updateImportedTimesheetStatus returns a service-generated error (e.g. 500 response)', () => {
+          component.selectedStatusInEdit = component.editableStatuses.find(s => s.statusKey === 'TS_APR_1');
+          mockTimesheetService.updateGeneratedTimesheetStatus.and.returnValue(of(new HttpResponse({ status: 204 })));
+          mockTimesheetService.updateImportedTimesheetStatus.and.returnValue(of(new HttpResponse({ status: 500, statusText: 'Unexpected null response from HTTP call mapping', body: null })));
+          spyOn(component, 'closeSideBar');
+
+          component.saveStatusAndStopEditing();
+
+          expect(mockToastrService.warning).toHaveBeenCalledWith('Timesheet status updated, but import status update returned an unexpected response.');
+          expect(component.editingStatus).toBeFalse();
+          expect(component.closeSideBar).toHaveBeenCalledWith(true);
+        });
+
         it('should handle missing importTimesheetData.id for the second API call', () => {
             component.selectedStatusInEdit = component.editableStatuses.find(s => s.statusKey === 'TS_APR_1');
             mockTimesheetService.updateGeneratedTimesheetStatus.and.returnValue(of(new HttpResponse({ status: 204 })));
