@@ -134,7 +134,7 @@
           </div>
 
         <div class="flex mb-4 gap-2">
-          <div class="flex items-start flex-col w-3/5">
+          <div class="flex items-start flex-col w-2/5">
             <div class="font-semibold mb-1">Status</div>
             <div
               (mouseenter)="isStatusHovered = true"
@@ -154,7 +154,7 @@
             </div>
             <!-- Comment area removed from here, will be part of the new section -->
           </div>
-          <div class="flex items-start flex-col w-1/5">
+          <div class="flex items-start flex-col w-2/5">
             <div class="font-semibold mb-1">Import Type</div>
             <div>{{importTimesheetData?.automatic === true ? 'Automatic' : 'Manual'}}</div>
           </div>
@@ -165,10 +165,9 @@
         </div>
 
         <!-- New Status Editing Section -->
-        <div *ngIf="isEditingStatusSectionOpen" class="border border-gray-300 p-4 rounded-md mt-4">
+        <div *ngIf="isEditingStatusSectionOpen" class="border border-grey-200 p-4 rounded-md my-4">
           <label class="block font-semibold mb-2">Select new status</label>
-          <mat-form-field appearance="outline" class="w-full mb-3">
-            <mat-label>Status</mat-label>
+          <mat-form-field appearance="outline" class="w-full custom-form-field mb-3">
             <mat-select [(ngModel)]="selectedStatusInEdit" (selectionChange)="onStatusSelectionChange($event)">
               <mat-option *ngFor="let status of editableStatuses" [value]="status">
                 {{status.statusGoodName}}
@@ -176,28 +175,50 @@
             </mat-select>
           </mat-form-field>
 
-          <mat-form-field *ngIf="selectedStatusInEdit?.statusKey === correctionNeeded" class="w-full mt-3 mb-3">
-            <mat-label>Reason</mat-label>
-            <input matInput [(ngModel)]="commentInEdit" placeholder="Enter reason">
-          </mat-form-field>
+          <div *ngIf="selectedStatusInEdit?.statusKey === correctionNeeded" class="w-full mt-1 mb-3">
+            <label class="block font-semibold mb-2">Reason</label>
+            <mat-form-field appearance="outline" class="w-full text-sm">
+              <textarea matInput [(ngModel)]="commentInEdit" placeholder="Enter comments for correction"></textarea>
+            </mat-form-field>
+            <!-- <mat-label>Reason</mat-label>
+            <input matInput [(ngModel)]="commentInEdit" placeholder="Enter reason"> -->
+          </div>
 
-          <div class="flex justify-end mt-4 space-x-2">
-            <button mat-icon-button (click)="closeStatusEditSection()" matTooltip="Cancel">
+          <div class="flex justify-end gap-3">
+            <button
+              mat-stroked-button
+              class="mat-cancel !rounded-[50px]"
+              type="button"
+              (click)="closeStatusEditSection()"
+              id="btnCancel"
+            >
+              Cancel
+            </button>
+            <button
+              mat-raised-button
+              class="mat-create !rounded-[50px]"
+              id="btnSave"
+              (click)="saveStatusAndStopEditing()"
+            >
+            Save
+            </button>
+            <!-- <button mat-icon-button (click)="closeStatusEditSection()" matTooltip="Cancel">
               <mat-icon class="text-red-500">cancel</mat-icon>
             </button>
             <button mat-icon-button (click)="saveStatusAndStopEditing()" matTooltip="Save">
-              <mat-icon class="text-green-500">save</mat-icon>
-            </button>
+              <mat-icon class="text-green-500">check_circle</mat-icon>
+            </button> -->
           </div>
         </div>
         <!-- End New Status Editing Section -->
 
-        <div class="flex mb-4 gap-2"> # This is the start of the next row (Timestamp, Warnings, Hours)
-          <div class="flex items-start flex-col w-3/5">
+        <div class="flex mb-4 gap-2">
+           <!-- # This is the start of the next row (Timestamp, Warnings, Hours) -->
+          <div class="flex items-start flex-col w-2/5">
             <div class="font-semibold mb-1">Timestamp</div>
             <div class="text-table-cell">{{util.timestampFormating(importTimesheetData?.statusDatetime)}}</div>
           </div>
-          <div class="flex items-start flex-col w-1/5">
+          <div class="flex items-start flex-col w-2/5">
             <div class="font-semibold mb-1">Total Warnings</div>
             <div [ngClass]="{'text-red-500': importTimesheetData.totalWarnings > 0}">{{importTimesheetData?.totalWarnings ?? 0 }}</div>
           </div>
