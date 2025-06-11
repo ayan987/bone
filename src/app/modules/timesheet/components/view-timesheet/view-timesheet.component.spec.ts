@@ -61,15 +61,16 @@ describe('ViewTimesheetComponent', () => {
 
   const allStatusTemplates = [
     { statusKey: TimesheetStatus.importedTimesheetMatched, statusGoodName: 'TS Imported' },
-    { statusKey: 'TS_APR_1', statusGoodName: '1st lvl Approved' },
-    { statusKey: 'TS_APR_2', statusGoodName: '2nd lvl Approved' },
-    { statusKey: 'TS_COR', statusGoodName: 'Correction Required' },
+    { statusKey: 'TS_APR_1', statusGoodName: '1st lvl Approved' }, // Assuming TS_APR_1 is a real key
+    { statusKey: 'TS_APR_2', statusGoodName: '2nd lvl Approved' }, // Assuming TS_APR_2 is a real key
+    { statusKey: TimesheetStatus.correctionNeeded, statusGoodName: 'Correction Required' },
     { statusKey: 'TS_OTHER', statusGoodName: 'Other Status' },
   ];
 
   // Mock for importTimesheetData as it's accessed in the template
   const mockImportTimesheetData = {
-    currentStatus: 'IMPORTED', // or any relevant initial status
+    id: 'import-456', // Added ID for testing updateImportedTimesheetStatus
+    currentStatus: 'IMPORTED',
     // ... other properties as needed by the template
   };
 
@@ -125,12 +126,16 @@ describe('ViewTimesheetComponent', () => {
     component.timesheetData = JSON.parse(JSON.stringify(mockGeneratedTimesheet)); // Deep copy
     // Initialize importTimesheetData as it's used in the template for status display
     component.importTimesheetData = JSON.parse(JSON.stringify(mockImportTimesheetData));
-    component.importTimesheetData.currentStatus = component.timesheetData.statuses.statusGoodName;
+    // Ensure currentStatus in mockImportTimesheetData matches timesheetData for initial state consistency
+    if (component.timesheetData && component.timesheetData.statuses) {
+        component.importTimesheetData.currentStatus = component.timesheetData.statuses.statusGoodName;
+    }
 
 
     mockTimesheetService.getAllTimesheetStatusTemplates.and.returnValue(of({ status: 200, body: [...allStatusTemplates] }));
     mockTimesheetService.getCommentByTimesheetId.and.returnValue(of({status: 200, body: []}));
     mockTimesheetService.getImportTimesheetData.and.returnValue(of({ status: 200, body: { importHistory: [], statusHistory: [] } }));
+    mockTimesheetService.updateImportedTimesheetStatus.and.returnValue(of({ status: 204 })); // Default success for second call
 
 
     fixture.detectChanges();
@@ -229,18 +234,32 @@ describe('ViewTimesheetComponent', () => {
     });
 
     describe('Dropdown Population and Interaction', () => {
-        it('editableStatuses should be populated correctly including "TS Imported"', () => {
-            const expectedGoodNames = ['TS Imported', '1st lvl Approved', '2nd lvl Approved', 'Correction Required'];
-            expect(component.editableStatuses.map(s => s.statusGoodName)).toEqual(jasmine.arrayContaining(expectedGoodNames));
+        it('editableStatuses should be populated correctly including "TS Imported" and "Correction Required" by key', () => {
+            // Based on the component's ngOnInit logic:
+            // status.statusKey === TimesheetStatus.importedTimesheetMatched
+            // status.statusGoodName === '1st lvl Approved'
+            // status.statusGoodName === '2nd lvl Approved'
+            // status.statusKey === TimesheetStatus.correctionNeeded
+            const expectedStatusKeysOrGoodNames = [
+                TimesheetStatus.importedTimesheetMatched,
+                '1st lvl Approved',
+                '2nd lvl Approved',
+                TimesheetStatus.correctionNeeded
+            ];
+            const actualPresent = component.editableStatuses.map(s => s.statusKey === TimesheetStatus.importedTimesheetMatched || s.statusKey === TimesheetStatus.correctionNeeded ? s.statusKey : s.statusGoodName);
+            expectedStatusKeysOrGoodNames.forEach(val => {
+                expect(actualPresent).toContain(val);
+            });
+            expect(component.editableStatuses.length).toBe(4); // Assuming no other statuses match these conditions
         });
 
-        it('onStatusSelectionChange should update selectedStatusInEdit and clear comment if not TS_COR', () => {
+        it('onStatusSelectionChange should update selectedStatusInEdit and clear comment if not Correction Required', () => {
             component.startEditingStatus();
             component.commentInEdit = 'A comment';
             fixture.detectChanges();
 
             const apr1Status = component.editableStatuses.find(s => s.statusKey === 'TS_APR_1');
-            expect(apr1Status).toBeDefined("TS_APR_1 status should exist in editableStatuses");
+            expect(apr1Status).toBeDefined("'TS_APR_1' status should exist in editableStatuses");
 
             component.onStatusSelectionChange({ value: apr1Status } as any);
             fixture.detectChanges();
@@ -249,37 +268,37 @@ describe('ViewTimesheetComponent', () => {
             expect(component.commentInEdit).toBe('');
         });
 
-         it('onStatusSelectionChange should NOT clear comment if TS_COR is selected', () => {
+         it('onStatusSelectionChange should NOT clear comment if Correction Required is selected', () => {
             component.startEditingStatus();
             fixture.detectChanges();
 
-            component.selectedStatusInEdit = component.editableStatuses.find(s => s.statusKey === 'TS_APR_1'); // Start with a non-TS_COR status
-            component.commentInEdit = "Initial Comment"; // Set a comment
+            component.selectedStatusInEdit = component.editableStatuses.find(s => s.statusKey === 'TS_APR_1');
+            component.commentInEdit = "Initial Comment";
             fixture.detectChanges();
 
-            const corStatus = component.editableStatuses.find(s => s.statusKey === 'TS_COR');
-            expect(corStatus).toBeDefined("TS_COR status should exist in editableStatuses");
+            const corStatus = component.editableStatuses.find(s => s.statusKey === TimesheetStatus.correctionNeeded);
+            expect(corStatus).toBeDefined("Correction Required status should exist in editableStatuses");
 
-            component.onStatusSelectionChange({ value: corStatus } as any); // Change to TS_COR
+            component.onStatusSelectionChange({ value: corStatus } as any);
             fixture.detectChanges();
 
-            expect(component.selectedStatusInEdit.statusKey).toBe('TS_COR');
-            expect(component.commentInEdit).toBe("Initial Comment"); // Comment should persist when selecting TS_COR
+            expect(component.selectedStatusInEdit.statusKey).toBe(TimesheetStatus.correctionNeeded);
+            expect(component.commentInEdit).toBe("Initial Comment");
         });
     });
 
     describe('Conditional Comment Field in Edit Mode', () => {
-        it('should show comment field if editingStatus is true and selectedStatusInEdit is TS_COR', fakeAsync(() => {
+        it('should show comment field if editingStatus is true and selectedStatusInEdit is Correction Required', fakeAsync(() => {
             component.startEditingStatus();
             fixture.detectChanges();
             tick();
-            component.selectedStatusInEdit = component.editableStatuses.find(s => s.statusKey === 'TS_COR');
+            component.selectedStatusInEdit = component.editableStatuses.find(s => s.statusKey === TimesheetStatus.correctionNeeded);
             fixture.detectChanges();
             tick();
             expect(getCommentTextarea()).toBeTruthy();
         }));
 
-        it('should hide comment field if selectedStatusInEdit is not TS_COR', fakeAsync(() => {
+        it('should hide comment field if selectedStatusInEdit is not Correction Required', fakeAsync(() => {
             component.startEditingStatus();
             fixture.detectChanges();
             tick();
@@ -312,44 +331,45 @@ describe('ViewTimesheetComponent', () => {
             expect(mockTimesheetService.updateGeneratedTimesheetStatus).not.toHaveBeenCalled();
         });
 
-        it('should save if original status was TS_COR and is re-selected but comment has changed', () => {
-            // Setup originalStatus to be TS_COR
-            component.originalStatus = { ...component.originalStatus, statusKey: 'TS_COR', reason: 'Old comment' };
-            component.selectedStatusInEdit = { ...component.editableStatuses.find(s => s.statusKey === 'TS_COR') }; // Ensure it's a TS_COR object
-             // Ensure selectedStatusInEdit is properly initialized to a TS_COR status object
-            const tsCorStatusObject = component.editableStatuses.find(s => s.statusKey === 'TS_COR');
-            expect(tsCorStatusObject).toBeDefined("TS_COR status object must exist in editableStatuses");
+        it('should save if original status was Correction Required and is re-selected but comment has changed', () => {
+            component.originalStatus = { ...component.originalStatus, statusKey: TimesheetStatus.correctionNeeded, reason: 'Old comment' };
+            const tsCorStatusObject = component.editableStatuses.find(s => s.statusKey === TimesheetStatus.correctionNeeded);
+            expect(tsCorStatusObject).toBeDefined("Correction Required status object must exist in editableStatuses");
             component.selectedStatusInEdit = tsCorStatusObject;
-            component.commentInEdit = 'New comment'; // Comment changed
+            component.commentInEdit = 'New comment';
 
             mockTimesheetService.updateGeneratedTimesheetStatus.and.returnValue(of({ status: 204 }));
+            // Assuming updateImportedTimesheetStatus will also be called and succeed
+            mockTimesheetService.updateImportedTimesheetStatus.and.returnValue(of({ status: 204 }));
             spyOn(component, 'closeSideBar');
 
             component.saveStatusAndStopEditing();
 
             expect(mockTimesheetService.updateGeneratedTimesheetStatus).toHaveBeenCalled();
-            expect(mockToastrService.success).toHaveBeenCalledWith('Timesheet status updated successfully.');
+            expect(mockTimesheetService.updateImportedTimesheetStatus).toHaveBeenCalled();
+            expect(mockToastrService.success).toHaveBeenCalledWith('Timesheet and import status updated successfully.');
             expect(component.editingStatus).toBeFalse();
             expect(component.closeSideBar).toHaveBeenCalledWith(true);
         });
 
 
-        it('should show error if TS_COR selected without comment', () => {
-            component.selectedStatusInEdit = component.editableStatuses.find(s => s.statusKey === 'TS_COR');
+        it('should show error if Correction Required selected without comment', () => {
+            component.selectedStatusInEdit = component.editableStatuses.find(s => s.statusKey === TimesheetStatus.correctionNeeded);
             component.commentInEdit = '';
             component.saveStatusAndStopEditing();
             expect(mockToastrService.error).toHaveBeenCalledWith('Please enter a comment for correction.');
             expect(mockTimesheetService.updateGeneratedTimesheetStatus).not.toHaveBeenCalled();
         });
 
-        it('should call service with correct payload for new status (e.g., 1st lvl Approved)', () => {
+        it('should call both services for new status (e.g., 1st lvl Approved) and show combined success', () => {
             component.selectedStatusInEdit = component.editableStatuses.find(s => s.statusKey === 'TS_APR_1');
             mockTimesheetService.updateGeneratedTimesheetStatus.and.returnValue(of({ status: 204 }));
+            mockTimesheetService.updateImportedTimesheetStatus.and.returnValue(of({ status: 204 }));
             spyOn(component, 'closeSideBar');
 
             component.saveStatusAndStopEditing();
 
-            const expectedPayload = {
+            const expectedGeneratedPayload = {
                 id: component.originalStatus.id,
                 statusKey: 'TS_APR_1',
                 statusGoodName: '1st lvl Approved',
@@ -357,38 +377,41 @@ describe('ViewTimesheetComponent', () => {
                 reason: null,
                 statusHistory: jasmine.arrayContaining([jasmine.objectContaining({statusKey: 'TS_APR_1'})])
             };
-            expect(mockTimesheetService.updateGeneratedTimesheetStatus).toHaveBeenCalledWith(component.timesheetData!.id, jasmine.objectContaining(expectedPayload));
-            expect(mockToastrService.success).toHaveBeenCalledWith('Timesheet status updated successfully.');
+            expect(mockTimesheetService.updateGeneratedTimesheetStatus).toHaveBeenCalledWith(component.timesheetData!.id, jasmine.objectContaining(expectedGeneratedPayload));
+            expect(mockTimesheetService.updateImportedTimesheetStatus).toHaveBeenCalledWith(component.importTimesheetData.id, 'TS_APR_1');
+            expect(mockToastrService.success).toHaveBeenCalledWith('Timesheet and import status updated successfully.');
             expect(component.editingStatus).toBeFalse();
             expect(component.timesheetData?.statuses?.statusKey).toBe('TS_APR_1');
             expect(component.closeSideBar).toHaveBeenCalledWith(true);
         });
 
-        it('should call service with correct payload for TS_COR with comment', () => {
-            component.selectedStatusInEdit = component.editableStatuses.find(s => s.statusKey === 'TS_COR');
+        it('should call both services for Correction Required with comment and show combined success', () => {
+            component.selectedStatusInEdit = component.editableStatuses.find(s => s.statusKey === TimesheetStatus.correctionNeeded);
             component.commentInEdit = 'Detailed correction info';
             mockTimesheetService.updateGeneratedTimesheetStatus.and.returnValue(of({ status: 204 }));
+            mockTimesheetService.updateImportedTimesheetStatus.and.returnValue(of({ status: 204 }));
             spyOn(component, 'closeSideBar');
 
             component.saveStatusAndStopEditing();
 
-            const expectedPayload = {
+            const expectedGeneratedPayload = {
                 id: component.originalStatus.id,
-                statusKey: 'TS_COR',
+                statusKey: TimesheetStatus.correctionNeeded,
                 statusGoodName: 'Correction Required',
                 datetime: jasmine.any(String),
                 reason: 'Detailed correction info',
-                statusHistory: jasmine.arrayContaining([jasmine.objectContaining({statusKey: 'TS_COR', reason: 'Detailed correction info'})])
+                statusHistory: jasmine.arrayContaining([jasmine.objectContaining({statusKey: TimesheetStatus.correctionNeeded, reason: 'Detailed correction info'})])
             };
-            expect(mockTimesheetService.updateGeneratedTimesheetStatus).toHaveBeenCalledWith(component.timesheetData!.id, jasmine.objectContaining(expectedPayload));
-            expect(mockToastrService.success).toHaveBeenCalledWith('Timesheet status updated successfully.');
+            expect(mockTimesheetService.updateGeneratedTimesheetStatus).toHaveBeenCalledWith(component.timesheetData!.id, jasmine.objectContaining(expectedGeneratedPayload));
+            expect(mockTimesheetService.updateImportedTimesheetStatus).toHaveBeenCalledWith(component.importTimesheetData.id, TimesheetStatus.correctionNeeded);
+            expect(mockToastrService.success).toHaveBeenCalledWith('Timesheet and import status updated successfully.');
             expect(component.editingStatus).toBeFalse();
-            expect(component.timesheetData?.statuses?.statusKey).toBe('TS_COR');
+            expect(component.timesheetData?.statuses?.statusKey).toBe(TimesheetStatus.correctionNeeded);
             expect(component.timesheetData?.statuses?.reason).toBe('Detailed correction info');
             expect(component.closeSideBar).toHaveBeenCalledWith(true);
         });
 
-        it('should handle API error during save and remain in edit mode', () => {
+        it('should handle error from first API call (updateGeneratedTimesheetStatus) and remain in edit mode', () => {
             component.selectedStatusInEdit = component.editableStatuses.find(s => s.statusKey === 'TS_APR_1');
             mockTimesheetService.updateGeneratedTimesheetStatus.and.returnValue(throwError(() => new Error('API Down')));
             spyOn(component, 'cancelEditingStatus'); // To check if it's NOT called implicitly by error handling
@@ -400,21 +423,64 @@ describe('ViewTimesheetComponent', () => {
             expect(component.cancelEditingStatus).not.toHaveBeenCalled();
         });
 
-        it('should update importTimesheetData.currentStatus on successful save for approved status', fakeAsync(() => {
+        it('should handle error from second API call (updateImportedTimesheetStatus) and show specific error', () => {
             component.selectedStatusInEdit = component.editableStatuses.find(s => s.statusKey === 'TS_APR_1');
             mockTimesheetService.updateGeneratedTimesheetStatus.and.returnValue(of({ status: 204 }));
+            mockTimesheetService.updateImportedTimesheetStatus.and.returnValue(throwError(() => new Error('Import Update Failed')));
+            spyOn(component, 'closeSideBar');
+
             component.saveStatusAndStopEditing();
-            tick();
+
+            expect(mockToastrService.error).toHaveBeenCalledWith('Timesheet status updated, but failed to update import status.');
+            expect(component.editingStatus).toBeFalse(); // Still exits edit mode as main operation succeeded
+            expect(component.closeSideBar).toHaveBeenCalledWith(true);
+        });
+
+        it('should handle unexpected response from second API call (updateImportedTimesheetStatus)', () => {
+            component.selectedStatusInEdit = component.editableStatuses.find(s => s.statusKey === 'TS_APR_1');
+            mockTimesheetService.updateGeneratedTimesheetStatus.and.returnValue(of({ status: 204 }));
+            mockTimesheetService.updateImportedTimesheetStatus.and.returnValue(of({ status: 201 })); // Unexpected success code
+            spyOn(component, 'closeSideBar');
+
+            component.saveStatusAndStopEditing();
+
+            expect(mockToastrService.warning).toHaveBeenCalledWith('Timesheet status updated, but import status update returned an unexpected response.');
+            expect(component.editingStatus).toBeFalse();
+            expect(component.closeSideBar).toHaveBeenCalledWith(true);
+        });
+
+        it('should handle missing importTimesheetData.id for the second API call', () => {
+            component.selectedStatusInEdit = component.editableStatuses.find(s => s.statusKey === 'TS_APR_1');
+            mockTimesheetService.updateGeneratedTimesheetStatus.and.returnValue(of({ status: 204 }));
+            component.importTimesheetData.id = null; // Simulate missing ID
+            spyOn(component, 'closeSideBar');
+
+            component.saveStatusAndStopEditing();
+
+            expect(mockToastrService.success).toHaveBeenCalledWith('Timesheet status updated successfully. Import status not updated (missing data).');
+            expect(mockTimesheetService.updateImportedTimesheetStatus).not.toHaveBeenCalled();
+            expect(component.editingStatus).toBeFalse();
+            expect(component.closeSideBar).toHaveBeenCalledWith(true);
+        });
+
+
+        it('should update importTimesheetData.currentStatus on successful save for approved status (both calls succeed)', fakeAsync(() => {
+            component.selectedStatusInEdit = component.editableStatuses.find(s => s.statusKey === 'TS_APR_1');
+            mockTimesheetService.updateGeneratedTimesheetStatus.and.returnValue(of({ status: 204 }));
+            mockTimesheetService.updateImportedTimesheetStatus.and.returnValue(of({ status: 204 }));
+            component.saveStatusAndStopEditing();
+            tick(); // for all async operations to complete
             fixture.detectChanges();
             expect(component.importTimesheetData.currentStatus).toBe('APPROVED');
         }));
 
-        it('should update importTimesheetData.currentStatus on successful save for correction required status', fakeAsync(() => {
-            component.selectedStatusInEdit = component.editableStatuses.find(s => s.statusKey === 'TS_COR');
+        it('should update importTimesheetData.currentStatus on successful save for correction required status (both calls succeed)', fakeAsync(() => {
+            component.selectedStatusInEdit = component.editableStatuses.find(s => s.statusKey === TimesheetStatus.correctionNeeded);
             component.commentInEdit = "Needs fix";
             mockTimesheetService.updateGeneratedTimesheetStatus.and.returnValue(of({ status: 204 }));
+            mockTimesheetService.updateImportedTimesheetStatus.and.returnValue(of({ status: 204 }));
             component.saveStatusAndStopEditing();
-            tick();
+            tick(); // for all async operations to complete
             fixture.detectChanges();
             expect(component.importTimesheetData.currentStatus).toBe('CORRECTION REQUIRED');
         }));

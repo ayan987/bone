@@ -159,11 +159,11 @@ export class ViewTimesheetComponent implements OnInit, OnChanges, OnDestroy {
       next: (response: any) => {
         if (response.status === 200) {
           const allStatuses = response.body;
-          // Ensure "TS Imported" is available for selection if needed, plus other editable ones.
-          // For now, "TS Imported" is the state FROM which we edit.
-          // The dropdown should contain statuses we can CHANGE TO.
           this.editableStatuses = allStatuses.filter((status: any) =>
-            ['1st lvl Approved', '2nd lvl Approved', 'Correction Required', 'TS Imported'].includes(status.statusGoodName)
+            status.statusKey === TimesheetStatus.importedTimesheetMatched || // TS Imported
+            status.statusGoodName === '1st lvl Approved' ||
+            status.statusGoodName === '2nd lvl Approved' ||
+            status.statusKey === TimesheetStatus.correctionNeeded // TS_CORRECTION_REQUIRED
           );
         }
       },
@@ -755,7 +755,7 @@ export class ViewTimesheetComponent implements OnInit, OnChanges, OnDestroy {
 
   onStatusSelectionChange(event: MatSelectChange): void {
     this.selectedStatusInEdit = event.value;
-    if (this.selectedStatusInEdit?.statusKey !== 'TS_COR') { // Assuming TS_COR is for Correction Required
+    if (this.selectedStatusInEdit?.statusKey !== TimesheetStatus.correctionNeeded) {
       this.commentInEdit = '';
     }
   }
@@ -768,19 +768,19 @@ export class ViewTimesheetComponent implements OnInit, OnChanges, OnDestroy {
 
     // If "TS Imported" (or the original status) is re-selected, treat as cancel or no-op
     if (this.selectedStatusInEdit.statusKey === this.originalStatus?.statusKey) {
-        // If status is TS_COR and comment has changed, then proceed to save
-        if (this.selectedStatusInEdit.statusKey === 'TS_COR' && this.commentInEdit !== (this.originalStatus?.reason || '')) {
+        // If status is TS_CORRECTION_REQUIRED and comment has changed, then proceed to save
+        if (this.selectedStatusInEdit.statusKey === TimesheetStatus.correctionNeeded && this.commentInEdit !== (this.originalStatus?.reason || '')) {
             // Continue to save logic
-        } else if (this.selectedStatusInEdit.statusKey !== 'TS_COR') {
+        } else if (this.selectedStatusInEdit.statusKey !== TimesheetStatus.correctionNeeded) {
              this.cancelEditingStatus();
              return;
-        } else if (this.selectedStatusInEdit.statusKey === 'TS_COR' && this.commentInEdit === (this.originalStatus?.reason || '')) {
+        } else if (this.selectedStatusInEdit.statusKey === TimesheetStatus.correctionNeeded && this.commentInEdit === (this.originalStatus?.reason || '')) {
             this.cancelEditingStatus();
             return;
         }
     }
 
-    if (this.selectedStatusInEdit.statusKey === 'TS_COR' && (!this.commentInEdit || this.commentInEdit.trim() === '')) {
+    if (this.selectedStatusInEdit.statusKey === TimesheetStatus.correctionNeeded && (!this.commentInEdit || this.commentInEdit.trim() === '')) {
       this.toastr.error('Please enter a comment for correction.');
       return;
     }
@@ -790,7 +790,7 @@ export class ViewTimesheetComponent implements OnInit, OnChanges, OnDestroy {
       statusKey: this.selectedStatusInEdit.statusKey,
       statusGoodName: this.selectedStatusInEdit.statusGoodName,
       datetime: new Date().toISOString(), // Ensure this is the format backend expects
-      reason: this.selectedStatusInEdit.statusKey === 'TS_COR' ? this.commentInEdit.trim() : null,
+      reason: this.selectedStatusInEdit.statusKey === TimesheetStatus.correctionNeeded ? this.commentInEdit.trim() : null,
     };
 
     // Prepare the new entry for statusHistory
@@ -820,7 +820,6 @@ export class ViewTimesheetComponent implements OnInit, OnChanges, OnDestroy {
     this.timesheetService.updateGeneratedTimesheetStatus(this.timesheetData.id, payload).subscribe({
       next: (response: any) => {
         if (response.status === 204 || response.status === 200) { // 204 No Content is a common success for PATCH/PUT
-          this.toastr.success('Timesheet status updated successfully.');
 
           // Update local timesheetData.statuses
           if (this.timesheetData && this.timesheetData.statuses) {
@@ -831,12 +830,37 @@ export class ViewTimesheetComponent implements OnInit, OnChanges, OnDestroy {
             this.timesheetData.statuses.statusHistory = updatedStatusHistory;
 
             // Also update the importTimesheetData.currentStatus if it's linked to this
-            if (this.importTimesheetData && this.timesheetData.statuses.statusKey === TimesheetStatus.importedTimesheetMatched) {
-                 // This logic might need refinement based on how importTimesheetData.currentStatus is derived/used
-                if (payload.statusKey === 'TS_COR') {
-                    this.importTimesheetData.currentStatus = 'CORRECTION REQUIRED'; // Or some other value
-                } else if (payload.statusGoodName.includes('Approved')) {
-                     this.importTimesheetData.currentStatus = 'APPROVED'; // Or some other value
+            // This logic might need refinement based on how importTimesheetData.currentStatus is derived/used
+            if (this.importTimesheetData && payload.statusKey === TimesheetStatus.correctionNeeded) {
+                this.importTimesheetData.currentStatus = 'CORRECTION REQUIRED';
+            } else if (this.importTimesheetData && payload.statusGoodName?.includes('Approved')) {
+                this.importTimesheetData.currentStatus = 'APPROVED';
+            } else if (this.importTimesheetData && payload.statusKey === TimesheetStatus.importedTimesheetMatched) {
+                this.importTimesheetData.currentStatus = 'TS IMPORTED'; // Or 'IMPORTED'
+            }
+            // Potentially update other fields in importTimesheetData if necessary
+          }
+
+          // Now, call updateImportedTimesheetStatus
+          if (this.importTimesheetData && this.importTimesheetData.id) {
+            this.timesheetService.updateImportedTimesheetStatus(this.importTimesheetData.id, this.selectedStatusInEdit.statusKey)
+              .subscribe({
+                next: (importStatusUpdateResponse: any) => {
+                  if (importStatusUpdateResponse.status === 204 || importStatusUpdateResponse.status === 200) {
+                    this.toastr.success('Timesheet and import status updated successfully.');
+                  } else {
+                    // Successful first call, but second call had an issue (though might not be an error status code)
+                    this.toastr.warning('Timesheet status updated, but import status update returned an unexpected response.');
+                  }
+                  this.editingStatus = false;
+                  this.closeSideBar(true);
+                },
+                error: (importErr) => {
+                  console.error('Error updating imported timesheet status:', importErr);
+                  // First call succeeded, but this one failed.
+                  this.toastr.error('Timesheet status updated, but failed to update import status.');
+                  this.editingStatus = false;
+                  this.closeSideBar(true); // Still close sidebar as main operation succeeded.
                 }
                 // Potentially update other fields in importTimesheetData if necessary
             }

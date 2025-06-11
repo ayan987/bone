@@ -57,8 +57,8 @@ const importTimesheetService = '/bosenetone/service/v1/importTimesheet';
 const commentService = '/bosenetone/service/v1/comments';
 
 export const environment = {
-  // redirectUri: 'https://bosenetonedev.web.app/',
-  redirectUri: 'http://localhost:4200/',
+  redirectUri: 'https://bosenetonedev.web.app/',
+  // redirectUri: 'http://localhost:4200/',
   msClientId: '79434a65-8027-4a9e-9ced-3af183c70a32',
   msGraphApiUrl: 'https://graph.microsoft.com/v1.0/',
   firebase: {

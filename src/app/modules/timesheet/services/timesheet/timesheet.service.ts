@@ -212,7 +212,7 @@ export class TimesheetService {
     )
   }
 
-  updateGeneratedTimesheetStatus(timesheetId: any, request: any): Observable<HttpResponse<any>> {
+  updateGeneratedTimesheetStatus(timesheetId: string, request: any): Observable<HttpResponse<any>> {
     return this.http.patch<any>(`${this.apiTimesheet}/${timesheetId}/statuses`, request, { observe: 'response' }).pipe(
       map((response: any) => {
         return new HttpResponse<any>({
