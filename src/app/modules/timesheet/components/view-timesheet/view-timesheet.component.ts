@@ -777,7 +777,7 @@ export class ViewTimesheetComponent implements OnInit, OnChanges, OnDestroy {
                 },
                 error: (importErr) => {
                   console.error('Error updating imported timesheet status:', importErr);
-                  this.toastr.error('Timesheet status updated, but failed to update import status.');
+                  // this.toastr.error('Timesheet status updated, but failed to update import status.');
                   this.editingStatus = false;
                   this.closeSideBar(true);
                 }
