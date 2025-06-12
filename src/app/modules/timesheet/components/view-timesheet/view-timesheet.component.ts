@@ -141,6 +141,7 @@ export class ViewTimesheetComponent implements OnInit, OnChanges, OnDestroy {
   comments: CommentDto[] = [];
   isViewAllComments: boolean = false;
   poTimesheetTemplateHeaderData!:any;
+  savingStatus: boolean = false;
 
   constructor(
     private readonly timesheetService: TimesheetService,
@@ -754,6 +755,7 @@ export class ViewTimesheetComponent implements OnInit, OnChanges, OnDestroy {
         return;
     }
 
+    this.savingStatus = true;
     this.timesheetService.updateGeneratedTimesheetStatus(this.timesheetData.id, payload).subscribe({
       next: (response: any) => {
         if (response.status === 204 || response.status === 200) {
@@ -789,6 +791,7 @@ export class ViewTimesheetComponent implements OnInit, OnChanges, OnDestroy {
                 next: (importStatusUpdateResponse: any) => {
                   if (importStatusUpdateResponse.status === 204 || importStatusUpdateResponse.status === 200) {
                     this.toastr.success('Timesheet and import status updated successfully.');
+                    this.savingStatus = false;
                   } else {
                     this.toastr.warning('Timesheet status updated, but import status update returned an unexpected response.');
                   }
@@ -797,9 +800,10 @@ export class ViewTimesheetComponent implements OnInit, OnChanges, OnDestroy {
                 },
                 error: (importErr) => {
                   console.error('Error updating imported timesheet status:', importErr);
+                  this.savingStatus = false;
                   this.toastr.error('Timesheet status updated, but failed to update import status.');
                   this.isEditingStatusSectionOpen = false;
-                  this.closeSideBar(true);
+                  // this.closeSideBar(true);
                 }
               });
           } else {
@@ -809,12 +813,14 @@ export class ViewTimesheetComponent implements OnInit, OnChanges, OnDestroy {
           }
         } else {
           this.toastr.error('Failed to update timesheet status. Unexpected response.');
+          this.savingStatus = false;
           // Potentially keep the edit section open on this kind of error
         }
       },
       error: (err) => {
         console.error('Error updating timesheet status:', err);
         this.toastr.error('An error occurred while updating status.');
+        this.savingStatus = false;
         // Potentially keep the edit section open on this kind of error
       }
     });

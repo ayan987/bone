@@ -189,6 +189,7 @@
               mat-stroked-button
               class="mat-cancel !rounded-[50px]"
               type="button"
+              [disabled]="savingStatus"
               (click)="closeStatusEditSection()"
               id="btnCancel"
             >
@@ -198,6 +199,7 @@
               mat-raised-button
               class="mat-create !rounded-[50px]"
               id="btnSave"
+              [disabled]="savingStatus"
               (click)="saveStatusAndStopEditing()"
             >
             Save
